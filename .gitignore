@@ -1,0 +1,12 @@
+.obsidian/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Local server/build artifacts
+node_modules/
+dist/
+build/
+.tauri-dist/
+

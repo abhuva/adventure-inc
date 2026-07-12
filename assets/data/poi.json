@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "world": {
+    "width": 1024,
+    "height": 1024
+  },
+  "tavern": {
+    "id": "tavern",
+    "name": "Tavern",
+    "titleImage": "assets/tavern-01.png",
+    "coord": { "x": 500, "y": 500 },
+    "description": "Base of operations. Parties return here to recover before new assignments."
+  },
+  "workSites": [
+    {
+      "id": "wood",
+      "name": "North Woodlot",
+      "titleImage": "assets/north-woodlot-01.png",
+      "coord": { "x": 350, "y": 250 },
+      "cycleHours": 6,
+      "description": "Worker route. Completes a deterministic wood delivery every 6 worker-hours.",
+      "output": { "wood": 3 }
+    },
+    {
+      "id": "ore",
+      "name": "Surface Ore Cut",
+      "titleImage": "assets/surface-ore-01.png",
+      "coord": { "x": 780, "y": 570 },
+      "cycleHours": 8,
+      "description": "Worker route. Completes a deterministic ore delivery every 8 worker-hours.",
+      "output": { "ore": 2 }
+    }
+  ],
+  "dungeons": [
+    {
+      "id": "cellar",
+      "name": "Rat Cellar",
+      "titleImage": "assets/rat-cellar-01.png",
+      "coord": { "x": 280, "y": 580 },
+      "description": "A short starter dungeon below old storage tunnels.",
+      "travelHours": 2,
+      "foodCost": 1,
+      "nodes": [
+        {
+          "id": "entry",
+          "name": "Collapsed Entry",
+          "type": "hazard",
+          "damage": 2,
+          "reward": { "hide": 1 }
+        },
+        {
+          "id": "rats",
+          "name": "Rat Pack",
+          "type": "combat",
+          "enemy": { "hp": 18, "atk": 3, "script": ["bite", "bite", "scratch"] },
+          "reward": { "hide": 3, "coin": 2, "xp": 2 }
+        },
+        {
+          "id": "boss",
+          "name": "Brood Matron",
+          "type": "combat",
+          "enemy": { "hp": 34, "atk": 5, "script": ["bite", "shriek", "heavy"] },
+          "reward": { "hide": 5, "coin": 5, "fame": 2, "xp": 5, "blueprint": "ironBlade" }
+        }
+      ]
+    },
+    {
+      "id": "mine",
+      "name": "Old Copper Mine",
+      "titleImage": "assets/old-copper-mine-01.png",
+      "coord": { "x": 740, "y": 340 },
+      "description": "A longer mine route with ore rewards and heavier enemies.",
+      "travelHours": 5,
+      "foodCost": 3,
+      "nodes": [
+        {
+          "id": "road",
+          "name": "Broken Road",
+          "type": "hazard",
+          "damage": 4,
+          "reward": { "ore": 2 }
+        },
+        {
+          "id": "kobolds",
+          "name": "Kobold Crew",
+          "type": "combat",
+          "enemy": { "hp": 42, "atk": 6, "script": ["stab", "heavy", "guard"] },
+          "reward": { "ore": 8, "coin": 6, "xp": 6 }
+        },
+        {
+          "id": "ward",
+          "name": "Mine Ward",
+          "type": "combat",
+          "enemy": { "hp": 56, "atk": 7, "script": ["pulse", "pulse", "heavy"] },
+          "reward": { "ore": 12, "fame": 4, "xp": 10, "blueprint": "wardCharm" }
+        }
+      ]
+    },
+    {
+      "id": "barracks",
+      "name": "Old Barracks",
+      "titleImage": "assets/old-baracks-01.png",
+      "coord": { "x": 680, "y": 760 },
+      "description": "A distant military ruin with utility checks and high combat pressure.",
+      "travelHours": 7,
+      "foodCost": 5,
+      "nodes": [
+        {
+          "id": "gate",
+          "name": "Gate Lock",
+          "type": "check",
+          "utility": 4,
+          "reward": { "wood": 4, "ore": 2 }
+        },
+        {
+          "id": "drills",
+          "name": "Animated Drills",
+          "type": "combat",
+          "enemy": { "hp": 64, "atk": 7, "script": ["strike", "heavy", "strike", "brace"] },
+          "reward": { "ore": 10, "coin": 10, "xp": 10 }
+        },
+        {
+          "id": "captain",
+          "name": "Clockwork Captain",
+          "type": "combat",
+          "enemy": { "hp": 86, "atk": 9, "script": ["mark", "heavy", "strike"] },
+          "reward": { "fame": 6, "xp": 16, "blueprint": "bunkRoom" }
+        }
+      ]
+    }
+  ]
+}
