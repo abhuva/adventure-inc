@@ -1,0 +1,13 @@
+export const CHARACTER_ATLAS = {
+  columns: 7,
+  rows: 7
+};
+
+export const MAP_VIEW_CONFIG = {
+  worldSize: 1024,
+  minZoom: 0.35,
+  maxZoom: 3
+};
+
+export const TEMPLE_INVENTORY_SLOTS = 20;
+export const REPLAY_DEFAULT_MS = 650;

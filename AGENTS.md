@@ -5,6 +5,7 @@ Always read `AI_CONTEXT.md` first. Use `NEXT_SESSION_HANDOFF.md` for the current
 Adventurer race/job/skill design lives in `docs/adventurer-skill-design.md`.
 Temple shard design lives in `docs/temple-shard-design.md`.
 Dungeon combat replay design lives in `docs/dungeon-combat-replay-design.md`.
+Architecture overview lives in `docs/architecture.md`.
 
 ## Project Goal
 
@@ -23,7 +24,7 @@ Core prototype pillars:
 
 ## Technical Direction
 
-- Runtime: plain HTML, CSS, and JavaScript.
+- Runtime: plain HTML, CSS, and ES-module JavaScript.
 - No game engine and no framework unless the user explicitly changes direction.
 - Keep the prototype static-file friendly; it should run by opening `index.html` or serving the folder.
 - Prefer explicit state objects and pure-ish resolver functions for deterministic systems.
@@ -62,7 +63,14 @@ Core prototype pillars:
 
 - `index.html`: static document and UI structure.
 - `styles.css`: dense dev-tool visual language.
-- `src/app.js`: current state model, deterministic dungeon resolver, tavern loop, roster, crafting, and rendering.
+- `src/main.js`: module entry.
+- `src/app.js`: small compatibility shim that starts the app.
+- `src/app/`: app composition, runtime context, save/load, static control binding adapters, command adapters, render adapters, and command-result log message adapters.
+- `src/core/`: pure math/format helpers.
+- `src/data/`: POI loading and validation.
+- `src/game/`: extracted deterministic game/data owners for blueprints, combat, dungeon simulation/operation/completion/automation/replay models, map pan/zoom view-state math, party selectors/commands, resources/rewards, roster data/commands/crafting, skill progression, tavern commands, Temple state/commands/bonuses/data/shard progression, time/worker-cycle helpers, and auto-time runtime.
+- `src/ui/`: DOM lookup/event helpers, tab activation helpers, select option helpers, render orchestration, and first extracted render helpers for header/status, reward text, blueprints, log rows, Population jobs, Tavern visitors, Dungeon node/replay surfaces, Map side-panel tables/details, Map world/actor HTML, Roster/party/skill/focused-character HTML, and Temple board/shard/detail HTML.
+- `tests/`: Node test suite for extracted pure logic.
 - `AI_CONTEXT.md`: current architecture and gameplay context for future sessions.
 - `NEXT_SESSION_HANDOFF.md`: current state and likely next work.
 
@@ -71,7 +79,8 @@ Core prototype pillars:
 Use quick checks after JavaScript changes:
 
 ```powershell
-node --check src\app.js
+npm run check:js
+npm test
 ```
 
 For browser behavior, run a local static server if needed:
