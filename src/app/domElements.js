@@ -6,6 +6,7 @@ export const REQUIRED_ELEMENT_IDS = [
   "phaseLabel",
   "runStateLabel",
   "mapPartySelect",
+  "mapPlanTabBtn",
   "overlandMap",
   "locationDetail",
   "operationRows",
@@ -32,6 +33,14 @@ export const REQUIRED_ELEMENT_IDS = [
   "strategySelect",
   "stopNodeSelect",
   "repeatSelect",
+  "expeditionStatus",
+  "expeditionRouteDetail",
+  "expeditionPartySelect",
+  "expeditionPartyDetail",
+  "continentStatus",
+  "continentMap",
+  "continentDetail",
+  "continentTransferRows",
   "nodeMap",
   "dungeonNodeInfo",
   "estimateBox",
@@ -49,7 +58,9 @@ export const REQUIRED_ELEMENT_IDS = [
   "shardInventoryRows",
   "shardDetailBox",
   "logRows",
-  "blueprintRows"
+  "blueprintRows",
+  "expeditionArrivalOverlay",
+  "startExpeditionBtn"
 ];
 
 export function bindAppElements(root = document) {

@@ -1,25 +1,24 @@
 import { ensureSettlementState } from "../game/settlement/workforceModel.js";
 import { ensureWorkSiteUpgradeState } from "../game/settlement/workSiteUpgrades.js";
 import { ensureEventState } from "../game/events/eventRuntime.js";
+import {
+  activateFocusedContinentResources,
+  ensureContinentState,
+  unlockExpeditionRoutesForDay
+} from "../game/continent/continentState.js";
 import { ensureWorldProgressionState } from "../game/progression/worldProgression.js";
 import { ensureTavernVisitorState } from "../game/roster/visitorQueue.js";
+import { createResourceState } from "../game/resources/resourceState.js";
 import { ensureWorkshopState } from "../game/workshop/workshopRuntime.js";
 
 export function normalizeAppState(state) {
   ensureEventState(state);
   ensureWorldProgressionState(state);
+  state.resources = createResourceState(state.resources || {});
+  ensureContinentState(state);
+  unlockExpeditionRoutesForDay(state);
+  activateFocusedContinentResources(state);
   ensureTavernVisitorState(state);
-  state.resources = {
-    coin: 0,
-    food: 0,
-    wood: 0,
-    ore: 0,
-    hide: 0,
-    planks: 0,
-    comfort_goods: 0,
-    training_bow: 0,
-    ...(state.resources || {})
-  };
   ensureSettlementState(state);
   ensureWorkSiteUpgradeState(state);
   ensureWorkshopState(state);
@@ -41,6 +40,7 @@ export function normalizeAppState(state) {
     backgroundImage: "assets/map-bg.png",
     ...(state.mapWorld || {})
   };
+  state.mapWorldByContinent = state.mapWorldByContinent || {};
   state.mapContextMenu = state.mapContextMenu || null;
   state.roster = (state.roster || []).map((hero) => ({
     ...hero,

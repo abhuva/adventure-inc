@@ -1,5 +1,6 @@
 export const LOCATION_UNLOCKS = {
   TAVERN: "tavern",
+  EXPEDITION: "expedition",
   RAT_CELLAR: "cellar",
   WOODLOT: "wood",
   ORE_CUT: "ore",

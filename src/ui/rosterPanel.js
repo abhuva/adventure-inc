@@ -3,6 +3,7 @@ import { rosterCardsHtml } from "./rosterView.js";
 export function renderRosterPanel({
   el,
   state,
+  roster = state.roster,
   atlas,
   heroStats,
   characterState,
@@ -11,7 +12,7 @@ export function renderRosterPanel({
   const minimized = state.rosterView === "minimized";
   el.rosterRows.classList.toggle("minimized", minimized);
   el.rosterRows.innerHTML = rosterCardsHtml({
-    roster: state.roster,
+    roster,
     focusedHeroId: state.focusedHeroId,
     minimized,
     heroStats,

@@ -365,14 +365,15 @@ Add a dedicated `Continent` top-level tab after at least two continents are avai
 Initial UI:
 
 - focused continent label
-- dropdown of unlocked continents
+- left-side continent overview map using `assets/continent-bg.png`
+- clickable continent markers for known and locked continents
 - selected continent summary
 - selected continent rules
 - time away
 - resource/operation summary
-- `switch/focus` button
+- `switch`/`cancel` context menu near the marker click for unlocked non-focused continents
 
-The dropdown should not switch by itself. Only `switch/focus` performs the focus change.
+Marker selection should not switch by itself. It updates the right-side detail panel; only the context-menu `switch` action performs the focus change.
 
 New owners:
 
@@ -383,8 +384,8 @@ New owners:
 Validation:
 
 - Continent tab renders unlocked continents.
-- Dropdown selection updates preview only.
-- Switch button changes focus.
+- Marker selection updates preview only.
+- Context-menu switch changes focus.
 - Switching to the current continent is no-op.
 
 ## Phase 8: Move Continent-Local State Behind Active Continent

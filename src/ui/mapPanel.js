@@ -32,6 +32,8 @@ export function renderMapPanel({
   hourFraction,
   onSelectLocation,
   onAssignSelectedParty,
+  onRunExpedition,
+  renderExpeditionPlan,
   onUpgradeWorkSite,
   onRunContext,
   onCancelContext
@@ -72,9 +74,14 @@ export function renderMapPanel({
     rewardText,
     heroName,
     onAssignSelectedParty,
+    onRunExpedition,
     onUpgradeWorkSite,
     workSiteUpgrade: workSiteUpgrade?.(selectedLocation)
   });
+  renderMapPlanTab({ documentRef, el, selectedLocation });
+  if (selectedLocation?.type === "expedition") {
+    renderExpeditionPlan?.();
+  }
   el.operationRows.innerHTML = operationRowsHtml({
     operations,
     repeatedPlans,
@@ -89,6 +96,22 @@ export function renderMapPanel({
   renderLogRows(el, logEntries);
 }
 
+function renderMapPlanTab({ documentRef, el, selectedLocation }) {
+  if (!el.mapPlanTabBtn) return;
+  const available = selectedLocation?.type === "expedition";
+  el.mapPlanTabBtn.hidden = !available;
+  el.mapPlanTabBtn.classList?.toggle("hidden", !available);
+  if (available) return;
+  const planPanel = documentRef.querySelector?.('[data-map-side-panel="plan"]');
+  if (!planPanel?.classList?.contains("active")) return;
+  const infoButton = documentRef.querySelector?.('[data-map-side-tab="info"]');
+  const infoPanel = documentRef.querySelector?.('[data-map-side-panel="info"]');
+  el.mapPlanTabBtn.classList?.remove("active");
+  planPanel.classList.remove("active");
+  infoButton?.classList?.add("active");
+  infoPanel?.classList?.add("active");
+}
+
 export function renderLocationDetail({
   el,
   location,
@@ -100,6 +123,7 @@ export function renderLocationDetail({
   rewardText,
   heroName,
   onAssignSelectedParty,
+  onRunExpedition,
   onUpgradeWorkSite,
   workSiteUpgrade
 }) {
@@ -121,7 +145,13 @@ export function renderLocationDetail({
       return;
     }
     const assignButton = event.target.closest?.("#assignSelectedPartyBtn");
-    if (!assignButton || !el.locationDetail.contains?.(assignButton)) return;
-    onAssignSelectedParty();
+    if (assignButton && el.locationDetail.contains?.(assignButton)) {
+      onAssignSelectedParty();
+      return;
+    }
+    const expeditionButton = event.target.closest?.("[data-run-expedition]");
+    if (expeditionButton && el.locationDetail.contains?.(expeditionButton)) {
+      onRunExpedition?.();
+    }
   };
 }

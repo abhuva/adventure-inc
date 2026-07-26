@@ -7,6 +7,7 @@ const SERIALIZABLE_TOP_LEVEL_KEYS = [
   "hour",
   "events",
   "progression",
+  "world",
   "tavern",
   "tavernVisitors",
   "settlement",

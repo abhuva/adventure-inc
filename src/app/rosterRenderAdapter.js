@@ -6,6 +6,7 @@ import {
   portraitStyle
 } from "../ui/rosterView.js";
 import { renderVisitorQueue } from "../ui/tavernView.js";
+import { localHeroes, localParties } from "../game/continent/continentState.js";
 import { createHeroFromVisitor } from "../game/roster/rosterCommands.js";
 import { tavernVisitorsForDay } from "../game/roster/visitorQueue.js";
 
@@ -108,6 +109,7 @@ export function createRosterRenderAdapter({
       documentRef,
       el,
       state,
+      parties: localParties(state),
       atlas,
       blueprints,
       focusedHero,
@@ -135,6 +137,7 @@ export function createRosterRenderAdapter({
     renderRosterPanel({
       el,
       state,
+      roster: localHeroes(state),
       atlas,
       heroStats,
       characterState,

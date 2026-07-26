@@ -1,6 +1,7 @@
 import {
   CHARACTER_ATLAS,
   MAP_BACKGROUND,
+  MAP_BACKGROUNDS,
   MAP_VIEW_CONFIG,
   REPLAY_DEFAULT_MS,
   TEMPLE_INVENTORY_SLOTS
@@ -15,12 +16,17 @@ import { createAppRuntimeContext } from "./appRuntimeContext.js";
 import { createLocalSaveRuntime } from "./localSaveRuntime.js";
 import {
   applyMapBackgroundDimensions,
-  loadMapBackgroundDimensions
+  applyMapBackgroundSet,
+  loadMapBackgroundDimensions,
+  loadMapBackgroundSet,
+  mapWorldForContinent
 } from "./mapBackgroundRuntime.js";
 import { createDungeonCommandHandlers } from "./dungeonCommandHandlers.js";
 import { createDungeonRenderAdapter } from "./dungeonRenderAdapter.js";
 import { createEventCommandHandlers } from "./eventCommandHandlers.js";
 import { createEventRenderAdapter } from "./eventRenderAdapter.js";
+import { createExpeditionCommandHandlers } from "./expeditionCommandHandlers.js";
+import { createExpeditionRenderAdapter } from "./expeditionRenderAdapter.js";
 import { createHeaderRenderAdapter } from "./headerRenderAdapter.js";
 import { createMapCommandHandlers } from "./mapCommandHandlers.js";
 import { createMapRenderAdapter } from "./mapRenderAdapter.js";
@@ -46,6 +52,7 @@ import {
 } from "../game/events/eventDefinitions.js";
 import { VISITORS } from "../game/roster/adventurerData.js";
 import { refreshTavernVisitors } from "../game/roster/visitorQueue.js";
+import { advanceExpeditionTransfers } from "../game/continent/continentState.js";
 import { SKILLS, SKILL_TREES } from "../game/roster/skills.js";
 import { heroStats } from "../game/roster/heroStats.js";
 import { SHARDS, TEMPLE_COLORS, TEMPLE_STONES } from "../game/temple/templeData.js";
@@ -230,6 +237,26 @@ const dungeonCommandHandlers = createDungeonCommandHandlers({
   triggerEvent: (...args) => eventCommandHandlers.triggerEvent(...args)
 });
 
+const expeditionCommandHandlers = createExpeditionCommandHandlers({
+  state,
+  controls: {
+    partyId: () => el.expeditionPartySelect.value || state.selectedPartyId,
+    setParty: (partyId) => {
+      state.selectedPartyId = partyId;
+      el.partySelect.value = partyId;
+      el.mapPartySelect.value = partyId;
+      el.expeditionPartySelect.value = partyId;
+    }
+  },
+  canPay: (cost) => resourceRuntime.canPay(cost),
+  pay: (cost) => resourceRuntime.pay(cost),
+  addLog,
+  render,
+  renderMapActors: (hourFraction) => appCallbacks.renderMapActors(hourFraction),
+  currentVisualHourFraction,
+  setTab: (tabId) => appShellCommandHandlers.setTab(tabId)
+});
+
 const mapCommandHandlers = createMapCommandHandlers({
   state,
   controls: {
@@ -267,6 +294,8 @@ const mapCommandHandlers = createMapCommandHandlers({
   populateDungeonSelect,
   populateStopNodes,
   setTab: (tabId) => appShellCommandHandlers.setTab(tabId),
+  setMapSideTab: (tabId) => appShellCommandHandlers.setMapSideTab(tabId),
+  selectExpeditionRoute: (routeId) => expeditionCommandHandlers.selectRoute(routeId),
   addLog,
   canPay: (cost) => resourceRuntime.canPay(cost),
   pay: (cost) => resourceRuntime.pay(cost),
@@ -277,7 +306,7 @@ const mapRenderAdapter = createMapRenderAdapter({
   state,
   el,
   documentRef: document,
-  mapWorld: () => state.mapWorld,
+  mapWorld: () => mapWorldForContinent(state),
   workSites: () => appSelection.workSites(),
   tavernCoord: () => appSelection.tavernCoord(),
   mapLocations: () => appSelection.mapLocations(),
@@ -297,6 +326,8 @@ const mapRenderAdapter = createMapRenderAdapter({
   selectLocation,
   selectLocationFromMap,
   assignSelectedPartyToSelectedDungeon,
+  runSelectedExpedition: () => mapCommandHandlers.runSelectedExpedition(),
+  renderExpeditionPlan: () => expeditionRenderAdapter.renderExpedition(),
   upgradeSelectedWorkSite: (siteId) => mapCommandHandlers.upgradeSelectedWorkSite(siteId),
   closeMapContextMenu
 });
@@ -315,6 +346,7 @@ const timeCommandHandlers = createTimeCommandHandlers({
   advanceWorkshopProduction,
   advanceWorkshopResearch,
   applyDailySettlementUpkeep,
+  advanceExpeditionTransfers: (hours) => advanceExpeditionTransfers(state, hours),
   refreshTavernVisitors: () => refreshTavernVisitors(state, VISITORS),
   addLog,
   render,
@@ -435,6 +467,23 @@ const { appSelection, templeQueries } = createAppQuerySetup({
   skillTrees: SKILL_TREES
 });
 
+const expeditionRenderAdapter = createExpeditionRenderAdapter({
+  state,
+  el,
+  formatReward,
+  heroStats,
+  characterState: (heroId) => appSelection.characterState(heroId),
+  partyMembers: (party) => appSelection.partyMembers(party),
+  canPay: (cost) => resourceRuntime.canPay(cost),
+  onSelectParty: (partyId) => expeditionCommandHandlers.selectParty(partyId),
+  onStartExpedition: () => expeditionCommandHandlers.startSelectedExpedition(),
+  onResolveArrival: (arrivalId, switchFocus) => expeditionCommandHandlers.resolveArrival(arrivalId, switchFocus),
+  onSelectContinent: (continentId, point) => expeditionCommandHandlers.selectContinentFromMap(continentId, point),
+  onCancelContinentContext: () => expeditionCommandHandlers.closeContinentContextMenu(),
+  onFocusContinent: (continentId) => expeditionCommandHandlers.focusSelectedContinent(continentId),
+  heroName: (heroId) => appSelection.heroName(heroId)
+});
+
 const templeRenderAdapter = createTempleRenderAdapter({
   state,
   el,
@@ -457,6 +506,7 @@ const appRenderHandlers = createAppRenderHandlers({
   mapRenderAdapter,
   rosterRenderAdapter,
   dungeonRenderAdapter,
+  expeditionRenderAdapter,
   templeRenderAdapter,
   systemsRenderAdapter,
   eventRenderAdapter
@@ -482,13 +532,21 @@ setupAppBootstrap({
   loadPoiData,
   setPoiData: (loadedPoiData) => appDataContext.setPoiData(loadedPoiData),
   loadAutosave: () => localSaveRuntime.load(),
-  loadMapBackground: () => loadMapBackgroundDimensions({
+  loadMapBackground: () => loadMapBackgroundSet({
+    backgrounds: MAP_BACKGROUNDS,
+    ImageCtor: window.Image
+  }).catch(() => loadMapBackgroundDimensions({
     src: MAP_BACKGROUND.src,
     ImageCtor: window.Image,
     fallbackWidth: MAP_BACKGROUND.fallbackWidth,
     fallbackHeight: MAP_BACKGROUND.fallbackHeight
-  }),
-  applyMapBackground: (dimensions) => applyMapBackgroundDimensions(state, dimensions),
+  })),
+  applyMapBackground: (dimensions) => {
+    if (dimensions.old_marches || dimensions.ash_coast) {
+      return applyMapBackgroundSet(state, dimensions);
+    }
+    return applyMapBackgroundDimensions(state, dimensions);
+  },
   startAutoTime: () => timeCommandHandlers.enableAutoTime(),
   onStartupComplete: () => eventCommandHandlers.triggerEvent(EVENT_TRIGGERS.GAME_STARTED),
   populateDungeonSelect: appCallbacks.populateDungeonSelect,
@@ -511,6 +569,7 @@ function setupControls() {
     partyCommandHandlers,
     replayCommandHandlers,
     rosterTavernCommandHandlers,
+    expeditionCommandHandlers,
     timeCommandHandlers,
     setupMapInteractions
   });
@@ -571,10 +630,11 @@ function replaySpeedLabel() {
 function selectedDungeonTargetNodeId() {
   const conquest = selectedDungeonConquestState();
   if (conquest.selectedNodeId) return conquest.selectedNodeId;
-  const value = el.stopNodeSelect.value;
+  const value = el.stopNodeSelect.value || "";
   if (value.startsWith("path:")) return value.slice("path:".length).split(",").filter(Boolean).at(-1) || "";
   if (value.startsWith("node:")) return value.slice("node:".length);
   const dungeon = appSelection.selectedDungeon();
+  if (!dungeon) return "";
   const route = dungeon?.routes?.find((item) => `route:${item.id}` === value)
     || dungeon?.routes?.find((item) => item.default)
     || dungeon?.routes?.[0];
@@ -585,8 +645,8 @@ function selectedDungeonTargetNodeId() {
 
 function selectedDungeonPlannedNodeIds() {
   const conquest = selectedDungeonConquestState();
-  if (conquest.plannedNodeIds.length) return conquest.plannedNodeIds;
-  const value = el.stopNodeSelect.value;
+  if (Array.isArray(conquest.plannedNodeIds) && conquest.plannedNodeIds.length) return conquest.plannedNodeIds;
+  const value = el.stopNodeSelect.value || "";
   if (value.startsWith("path:")) return value.slice("path:".length).split(",").filter(Boolean);
   return [];
 }
@@ -599,7 +659,7 @@ function selectedDungeonStopNodeValue() {
 
 function selectedDungeonConquestState() {
   const dungeon = appSelection.selectedDungeon();
-  return dungeon ? ensureDungeonConquestState(state, dungeon.id) : {};
+  return dungeon ? ensureDungeonConquestState(state, dungeon.id) : { selectedNodeId: null, plannedNodeIds: [] };
 }
 
 function selectLocation(locationId) {

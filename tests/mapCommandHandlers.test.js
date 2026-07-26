@@ -36,6 +36,12 @@ function createHarness(overrides = {}) {
       type: "dungeon",
       name: "Rat Cellar",
       dungeon: { id: "cellar", name: "Rat Cellar" }
+    },
+    expedition: {
+      id: "expedition",
+      type: "expedition",
+      name: "Expedition",
+      route: { id: "old_marches_to_ash_coast", name: "Ash Coast Charter" }
     }
   };
   const handlers = createMapCommandHandlers({
@@ -59,6 +65,8 @@ function createHarness(overrides = {}) {
     populateStopNodes: () => calls.push("populateStopNodes"),
     replayTimerApi: () => ({ stop: () => calls.push("stopReplay") }),
     setTab: (tabId) => calls.push(["tab", tabId]),
+    setMapSideTab: (tabId) => calls.push(["mapSide", tabId]),
+    selectExpeditionRoute: (routeId) => calls.push(["route", routeId]),
     addLog: (text, type) => logs.push({ text, type }),
     render: () => calls.push("render")
   });
@@ -74,7 +82,7 @@ test("map handlers select dungeon locations and clear cached estimates", () => {
 
   assert.equal(state.selectedLocationId, "cellar");
   assert.equal(state.lastEstimate, null);
-  assert.deepEqual(calls, ["populateDungeonSelect", ["setDungeon", "cellar"], "populateStopNodes", "render"]);
+  assert.deepEqual(calls, [["mapSide", "info"], "populateDungeonSelect", ["setDungeon", "cellar"], "populateStopNodes", "render"]);
 });
 
 test("map handlers open and cancel dungeon context menu from map clicks", () => {
@@ -87,6 +95,7 @@ test("map handlers open and cancel dungeon context menu from map clicks", () => 
   assert.deepEqual(state.mapContextMenu, { locationId: "cellar", x: 55, y: 70 });
   assert.equal(state.lastEstimate, null);
   assert.deepEqual(calls, [
+    ["mapSide", "info"],
     "populateDungeonSelect",
     ["setDungeon", "cellar"],
     "populateStopNodes",
@@ -110,7 +119,18 @@ test("map handlers select non-dungeon locations without changing dungeon control
 
   assert.equal(state.selectedLocationId, "tavern");
   assert.notEqual(state.lastEstimate, null);
-  assert.deepEqual(calls, ["render"]);
+  assert.deepEqual(calls, [["mapSide", "info"], "render"]);
+});
+
+test("map handlers select expedition locations and open the plan side tab", () => {
+  const { state, calls, handlers } = createHarness({
+    state: { selectedLocationId: "tavern" }
+  });
+
+  handlers.selectLocation("expedition");
+
+  assert.equal(state.selectedLocationId, "expedition");
+  assert.deepEqual(calls, [["route", "old_marches_to_ash_coast"], ["mapSide", "plan"], "render"]);
 });
 
 test("map handlers assign selected party to dungeon as repeated route", () => {
@@ -148,4 +168,19 @@ test("map handlers ignore assignment when selected location is not a dungeon", (
   assert.equal(state.lastEstimate, null);
   assert.deepEqual(logs, []);
   assert.deepEqual(calls, []);
+});
+
+test("map handlers route expedition context run to the plan side tab", () => {
+  const { calls, handlers } = createHarness({
+    state: { selectedLocationId: "expedition" }
+  });
+
+  handlers.runSelectedExpedition();
+
+  assert.deepEqual(calls, [
+    ["route", "old_marches_to_ash_coast"],
+    ["tab", "map"],
+    ["mapSide", "plan"],
+    "render"
+  ]);
 });

@@ -5,6 +5,7 @@ export function dungeonOptionsHtml(dungeons = []) {
 }
 
 export function stopNodeOptionsHtml(dungeon) {
+  if (!dungeon) return `<option value="">no local dungeon</option>`;
   const routes = dungeonRoutes(dungeon);
   if (dungeon?.routes?.length) {
     return [

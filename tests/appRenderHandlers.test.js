@@ -24,6 +24,11 @@ function createHarness() {
       renderDungeon: () => calls.push("dungeon"),
       renderDungeonReplay: () => calls.push("dungeonReplay")
     },
+    expeditionRenderAdapter: {
+      renderArrival: () => calls.push("arrival"),
+      renderContinent: () => calls.push("continent"),
+      renderExpedition: () => calls.push("expedition")
+    },
     templeRenderAdapter: {
       renderTemple: () => calls.push("temple")
     },
@@ -51,8 +56,10 @@ test("app render handlers preserve top-level render order", () => {
     "parties",
     "roster",
     "dungeon",
+    "continent",
     "temple",
-    "systems"
+    "systems",
+    "arrival"
   ]);
 });
 
@@ -87,13 +94,21 @@ test("app render handlers expose scoped time tick render", () => {
   assert.deepEqual(calls, [
     "header",
     ["mapActors", 0.5],
+    "arrival",
     "header",
     "jobs",
+    "arrival",
     "header",
     "dungeonReplay",
+    "arrival",
     "header",
+    "parties",
+    "roster",
+    "arrival",
     "header",
     "visitors",
-    "header"
+    "arrival",
+    "header",
+    "arrival"
   ]);
 });

@@ -252,27 +252,28 @@ After at least two continents are available, the player can switch focus from a 
 The Continent tab should expose:
 
 - current focused continent
-- dropdown of unlocked continents
+- continent overview map using `assets/continent-bg.png`
+- clickable continent markers for known and locked continents
 - summary of selected continent
 - time since selected continent was last focused
 - local resource summary
 - local operation summary
 - known rule modifiers
-- `switch/focus` button
+- `switch`/`cancel` context menu near the click point for unlocked non-focused continents
 
-The dropdown selection alone should not switch continents. The `switch/focus` button performs the focus change.
+Selecting a marker alone should not switch continents. It updates the right-side detail panel. If the selected continent is unlocked and not currently focused, the marker click also opens a context menu where `switch` performs the focus change.
 
 Switch behavior:
 
-1. Player selects an unlocked continent in the dropdown.
-2. Player clicks `switch/focus`.
+1. Player clicks an unlocked non-focused continent marker.
+2. Player clicks `switch` in the context menu.
 3. Current continent stores its last-updated timestamp.
 4. Target continent calculates time away.
 5. Target continent catch-up applies.
 6. The target continent becomes focused.
 7. A catch-up report is shown.
 
-This keeps switching explicit and prevents accidental refocus when inspecting other continents.
+This keeps switching explicit and prevents accidental refocus when inspecting other continents or locked future destinations.
 
 ## Catch-Up For Unfocused Continents
 

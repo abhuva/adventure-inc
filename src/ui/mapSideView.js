@@ -37,6 +37,16 @@ export function locationDetailHtml({
     lines.push(`<div class="detail-line">click dungeon on map to run</div>`);
   }
 
+  if (location.type === "expedition") {
+    const route = location.route;
+    lines.push(`<div class="detail-line">route: ${route.name}</div>`);
+    lines.push(`<div class="detail-line">destination: ${route.destinationContinentId}</div>`);
+    lines.push(`<div class="detail-line">travel time: ${Math.ceil(route.durationHours / 24)} days (${route.durationHours}h)</div>`);
+    lines.push(`<div class="detail-line">cost: ${rewardText(route.cost)}</div>`);
+    lines.push(`<div class="detail-line">capacity: ${route.capacity}</div>`);
+    lines.push(`<div class="detail-line">known hazards: ${route.hazards}</div>`);
+  }
+
   return lines.join("");
 }
 

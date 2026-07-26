@@ -7,8 +7,10 @@ export const DEFAULT_RENDER_ORDER = [
   "parties",
   "roster",
   "dungeon",
+  "continent",
   "temple",
-  "systems"
+  "systems",
+  "arrival"
 ];
 
 export function renderAppSections(renderers, order = DEFAULT_RENDER_ORDER) {

@@ -63,6 +63,7 @@ export function createDungeonCommandHandlers({
   }
 
   function simulateRun({ dungeon, strategy, stopNode, party }) {
+    if (!dungeon) return null;
     return simulateDungeonRun({
       dungeon,
       strategy,
@@ -78,12 +79,18 @@ export function createDungeonCommandHandlers({
 
   function simulateSelectedRun({ updateRepeatedPlan = false } = {}) {
     const party = selectedParty();
+    const dungeon = selectedDungeon();
+    if (!dungeon) {
+      logMessage({ text: "no local dungeon available on this continent", type: "bad" });
+      return null;
+    }
     const estimate = simulateRun({
-      dungeon: selectedDungeon(),
+      dungeon,
       strategy: controls.strategy(),
       stopNode: controls.stopNode(),
       party
     });
+    if (!estimate) return null;
     setDungeonEstimate(state, estimate, replayTimerApi());
     if (updateRepeatedPlan && state.repeatedPlans[party.id]) {
       state.repeatedPlans[party.id] = cloneEstimate(estimate);
@@ -210,7 +217,8 @@ export function createDungeonCommandHandlers({
     },
 
     resimulateSelectedRun() {
-      const estimate = simulateSelectedRun({ updateRepeatedPlan: true });
+    const estimate = simulateSelectedRun({ updateRepeatedPlan: true });
+      if (!estimate) return;
       if (state.repeatedPlans[estimate.partyId]) {
         ensureRepeatedPlanQueued(estimate.partyId);
       }
@@ -219,6 +227,11 @@ export function createDungeonCommandHandlers({
 
     selectTargetNode(nodeId) {
       const dungeon = selectedDungeon();
+      if (!dungeon) {
+        logMessage({ text: "no local dungeon available on this continent", type: "bad" });
+        render();
+        return;
+      }
       const conquest = ensureDungeonConquestState(state, dungeon.id);
       const planned = controls.planNodeClick?.(dungeon, nodeId, conquest) || [];
       conquest.selectedNodeId = nodeId;
@@ -229,6 +242,7 @@ export function createDungeonCommandHandlers({
         return;
       }
       const estimate = simulateSelectedRun({ updateRepeatedPlan: true });
+      if (!estimate) return;
       if (state.repeatedPlans[estimate.partyId]) {
         ensureRepeatedPlanQueued(estimate.partyId);
       }

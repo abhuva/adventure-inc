@@ -18,7 +18,7 @@ export function mapPoiButtonHtml(item, selectedLocationId) {
 export function mapContextMenuHtml(contextMenu, locationsById = {}) {
   if (!contextMenu?.locationId) return "";
   const location = locationsById[contextMenu.locationId];
-  if (!location || location.type !== "dungeon") return "";
+  if (!location || !["dungeon", "expedition"].includes(location.type)) return "";
   return `
     <div class="map-context-menu" style="left:${contextMenu.x}px;top:${contextMenu.y}px">
       <button type="button" data-map-context-action="run">run</button>
@@ -44,13 +44,6 @@ export function mapWorldHtml({ poi, tavernCoord, selectedLocationId, mapWorld, c
   return `${mapContextMenuHtml(contextMenu, locationsById)}<div id="mapWorld" class="map-world" style='${mapWorldStyle(mapWorld)}'>${routeHtml}${poiHtml}<div id="mapActors" class="map-actors"></div></div>`;
 }
 
-export function workerActorHtml({ site, count, coord }) {
-  if (count <= 0) return "";
-  return `
-    <div class="map-actor worker" title="${site.name} workers: ${count}" style="left:${coord.x}px;top:${coord.y}px"></div>
-  `;
-}
-
 export function partyActorHtml({ operation, phaseState, coord }) {
   const busy = phaseState.phase.from.x === phaseState.phase.to.x && phaseState.phase.from.y === phaseState.phase.to.y;
   return `
@@ -58,12 +51,7 @@ export function partyActorHtml({ operation, phaseState, coord }) {
   `;
 }
 
-export function mapActorsHtml({ workSites, jobs, workerCoord, operations, currentOperationPhase, interpolateCoord }) {
-  const workerHtml = workSites.map((site) => workerActorHtml({
-    site,
-    count: jobs[site.id] || 0,
-    coord: workerCoord(site)
-  })).join("");
+export function mapActorsHtml({ operations, currentOperationPhase, interpolateCoord }) {
   const operationHtml = operations.map((operation) => {
     const phaseState = currentOperationPhase(operation);
     return partyActorHtml({
@@ -72,5 +60,5 @@ export function mapActorsHtml({ workSites, jobs, workerCoord, operations, curren
       coord: interpolateCoord(phaseState.phase.from, phaseState.phase.to, phaseState.progress)
     });
   }).join("");
-  return workerHtml + operationHtml;
+  return operationHtml;
 }

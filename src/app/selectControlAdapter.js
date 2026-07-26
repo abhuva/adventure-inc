@@ -3,6 +3,7 @@ import {
   populatePartySelect,
   populateStopNodes
 } from "./selectControls.js";
+import { localParties } from "../game/continent/continentState.js";
 
 export function createSelectControlAdapter({
   state,
@@ -27,7 +28,7 @@ export function createSelectControlAdapter({
     populatePartySelect() {
       populatePartySelect({
         el,
-        parties: state.parties,
+        parties: localParties(state),
         selectedPartyId: state.selectedPartyId
       });
     }

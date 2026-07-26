@@ -37,6 +37,7 @@ function createHarness() {
     commitLastEstimate: () => calls.push(["commitLastEstimate"]),
     cycleReplaySpeed: () => calls.push(["cycleReplaySpeed"]),
     onDungeonSelectChange: () => calls.push(["onDungeonSelectChange"]),
+    onExpeditionPartySelectChange: () => calls.push(["onExpeditionPartySelectChange"]),
     onMapPartySelectChange: () => calls.push(["onMapPartySelectChange"]),
     onPartySelectChange: () => calls.push(["onPartySelectChange"]),
     onStrategySelectChange: () => calls.push(["onStrategySelectChange"]),
@@ -53,6 +54,7 @@ function createHarness() {
     setTab: (id) => calls.push(["setTab", id]),
     setupMapInteractions: () => calls.push(["setupMapInteractions"]),
     simulateSelectedRun: () => calls.push(["simulateSelectedRun"]),
+    startSelectedExpedition: () => calls.push(["startSelectedExpedition"]),
     toggleAutoTime: () => calls.push(["toggleAutoTime"]),
     toggleReplayPlayback: () => calls.push(["toggleReplayPlayback"]),
     toggleRosterView: () => calls.push(["toggleRosterView"]),
@@ -63,6 +65,7 @@ function createHarness() {
   };
   const replayTimelineSlider = fakeElement();
   const dungeonSelect = fakeElement();
+  const expeditionPartySelect = fakeElement();
   const mapPartySelect = fakeElement();
   const partySelect = fakeElement();
   const strategySelect = fakeElement();
@@ -85,6 +88,7 @@ function createHarness() {
     on,
     el: {
       dungeonSelect,
+      expeditionPartySelect,
       mapPartySelect,
       partySelect,
       replayTimelineSlider,
@@ -96,6 +100,7 @@ function createHarness() {
   return {
     calls,
     dungeonSelect,
+    expeditionPartySelect,
     mapPartySelect,
     mapTab,
     dungeonInfoTab,
@@ -137,32 +142,36 @@ test("setupControls binds primary command buttons", () => {
   registered["buildHousesBtn:click"]();
   registered["saveNowBtn:click"]();
   registered["resetSaveBtn:click"]();
+  registered["startExpeditionBtn:click"]();
   registered["replayPrevBtn:click"]();
   registered["replayLastBtn:click"]();
 
-  assert.deepEqual(calls.slice(-6), [
+  assert.deepEqual(calls.slice(-7), [
     ["advanceTime", 24, true],
     ["buildHouses"],
     ["saveNow"],
     ["resetSave"],
+    ["startSelectedExpedition"],
     ["setReplayCursor", 3, undefined],
     ["setReplayCursor", 9, undefined]
   ]);
 });
 
 test("setupControls binds replay slider and select changes", () => {
-  const { calls, dungeonSelect, mapPartySelect, partySelect, replayTimelineSlider, strategySelect } = createHarness();
+  const { calls, dungeonSelect, expeditionPartySelect, mapPartySelect, partySelect, replayTimelineSlider, strategySelect } = createHarness();
 
   replayTimelineSlider.value = "6";
   replayTimelineSlider.trigger("input");
   mapPartySelect.trigger("change");
+  expeditionPartySelect.trigger("change");
   dungeonSelect.trigger("change");
   partySelect.trigger("change");
   strategySelect.trigger("change");
 
-  assert.deepEqual(calls.slice(-5), [
+  assert.deepEqual(calls.slice(-6), [
     ["setReplayCursor", 6, true],
     ["onMapPartySelectChange"],
+    ["onExpeditionPartySelectChange"],
     ["onDungeonSelectChange"],
     ["onPartySelectChange"],
     ["onStrategySelectChange"]

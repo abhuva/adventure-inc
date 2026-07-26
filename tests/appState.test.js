@@ -10,6 +10,8 @@ test("createInitialState creates independent mutable state objects", () => {
   first.temple.stones.triangle.inventorySlots[0] = "cellarFang";
 
   assert.equal(second.resources.coin, 10);
+  assert.equal(second.world.resourcesByContinent.old_marches.coin, 10);
+  assert.equal(first.world.resourcesByContinent.old_marches.coin, 0);
   assert.equal(second.temple.stones.triangle.inventorySlots[0], null);
   assert.equal(first.dungeonReplay.playbackMs, 123);
   assert.equal(first.temple.stones.square.inventorySlots.length, 3);

@@ -1,5 +1,4 @@
 import { distance, interpolateCoord } from "../core/math.js";
-import { workerCoord as getWorkerCoord } from "../game/map/mapActorRuntime.js";
 import {
   mapStatusText as buildMapStatusText,
   mapTransformStyle
@@ -15,7 +14,6 @@ export function createMapRenderAdapter({
   el,
   documentRef,
   mapWorld,
-  workSites,
   tavernCoord,
   mapLocations,
   selectedLocation,
@@ -29,6 +27,8 @@ export function createMapRenderAdapter({
   selectLocation,
   selectLocationFromMap,
   assignSelectedPartyToSelectedDungeon,
+  runSelectedExpedition,
+  renderExpeditionPlan,
   upgradeSelectedWorkSite,
   closeMapContextMenu
 }) {
@@ -52,24 +52,10 @@ export function createMapRenderAdapter({
     return distance(from, to).toFixed(1);
   }
 
-  function workerCoord(job, site, hourFraction = 0) {
-    return getWorkerCoord({
-      job,
-      site,
-      workerProgress: state.workerProgress,
-      jobCounts: state.tavern.jobs,
-      tavernCoord: tavernCoord(),
-      hourFraction
-    });
-  }
-
   function renderMapActors(hourFraction = 0) {
     const actorLayer = documentRef.getElementById("mapActors");
     if (!actorLayer) return;
     actorLayer.innerHTML = mapActorsHtml({
-      workSites: workSites(),
-      jobs: state.tavern.jobs,
-      workerCoord: (site) => workerCoord(site.id, site, hourFraction),
       operations: state.operations,
       currentOperationPhase: (operation) => currentOperationPhase(operation, hourFraction),
       interpolateCoord
@@ -91,6 +77,8 @@ export function createMapRenderAdapter({
       rewardText: formatReward,
       heroName,
       onAssignSelectedParty: assignSelectedPartyToSelectedDungeon,
+      onRunExpedition: runSelectedExpedition,
+      renderExpeditionPlan,
       onUpgradeWorkSite: upgradeSelectedWorkSite,
       workSiteUpgrade: workSiteUpgrade?.(location)
     });
@@ -126,8 +114,13 @@ export function createMapRenderAdapter({
       hourFraction: currentVisualHourFraction(),
       onSelectLocation: selectLocationFromMap || ((locationId) => selectLocation(locationId)),
       onAssignSelectedParty: assignSelectedPartyToSelectedDungeon,
+      onRunExpedition: runSelectedExpedition,
       onUpgradeWorkSite: upgradeSelectedWorkSite,
-      onRunContext: assignSelectedPartyToSelectedDungeon,
+      onRunContext: () => {
+        const contextLocation = selectedLocation();
+        if (contextLocation?.type === "expedition") runSelectedExpedition?.();
+        else assignSelectedPartyToSelectedDungeon?.();
+      },
       onCancelContext: closeMapContextMenu
     });
   }
@@ -138,7 +131,6 @@ export function createMapRenderAdapter({
     renderMapActors,
     renderLocationDetail,
     mapStatusText,
-    formatMapDistance,
-    workerCoord
+    formatMapDistance
   };
 }

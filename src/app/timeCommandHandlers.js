@@ -10,6 +10,7 @@ import {
 import { advancePartyOperations } from "../game/dungeon/operationRuntime.js";
 import { applyDailyProduction } from "../game/time/dailyProductionRuntime.js";
 import { advanceGameHours } from "../game/time/timeAdvanceRuntime.js";
+import { unlockExpeditionRoutesForDay } from "../game/continent/continentState.js";
 import { workerProductionMultiplier } from "../game/settlement/workforceModel.js";
 
 export function createTimeCommandHandlers({
@@ -26,6 +27,7 @@ export function createTimeCommandHandlers({
   advanceWorkshopProduction,
   advanceWorkshopResearch,
   applyDailySettlementUpkeep,
+  advanceExpeditionTransfers,
   refreshTavernVisitors,
   addLog,
   render,
@@ -45,6 +47,14 @@ export function createTimeCommandHandlers({
     result.completed.forEach(completeEstimate);
     state.operations = result.remaining;
     result.completedPartyIds.forEach((partyId) => ensureRepeatedPlanQueued(partyId));
+  }
+
+  function advanceTransfers(hours) {
+    if (!advanceExpeditionTransfers) return;
+    const arrivals = advanceExpeditionTransfers(hours);
+    arrivals.forEach((arrival) => {
+      addLog(`${arrival.partyName} reached ${arrival.destinationName}.`, "ok");
+    });
   }
 
   function advanceWorkerCycles(hours) {
@@ -70,6 +80,12 @@ export function createTimeCommandHandlers({
       }
     }
     refreshTavernVisitors?.();
+    unlockExpeditionRoutesForDay(state).forEach((route) => {
+      logMessage({
+        text: `new expedition available: ${route.name}`,
+        type: "ok"
+      });
+    });
     result.repeatedPartyIds.forEach((partyId) => ensureRepeatedPlanQueued(partyId));
   }
 
@@ -98,6 +114,7 @@ export function createTimeCommandHandlers({
         advanceWorkerCycles(1);
         advanceWorkshop(1);
         advanceOperations(1);
+        advanceTransfers(1);
       },
       onDayRollover: () => produceDailyResources(report),
       advanceClock

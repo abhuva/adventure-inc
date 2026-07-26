@@ -1,15 +1,25 @@
 import { heroStats } from "../roster/heroStats.js";
+import {
+  ensureContinentState,
+  isHeroTraveling,
+  localParties
+} from "../continent/continentState.js";
 
 export function focusedHero(state) {
-  return state.roster.find((hero) => hero.id === state.focusedHeroId) || state.roster[0];
+  const world = ensureContinentState(state);
+  return state.roster.find((hero) => hero.id === state.focusedHeroId && world.heroLocations[hero.id] === world.focusedContinentId)
+    || state.roster.find((hero) => world.heroLocations[hero.id] === world.focusedContinentId)
+    || state.roster[0];
 }
 
 export function selectedParty(state) {
-  return state.parties.find((party) => party.id === state.selectedPartyId) || state.parties[0];
+  const parties = localParties(state);
+  return parties.find((party) => party.id === state.selectedPartyId) || parties[0] || state.parties[0];
 }
 
 export function partyForHero(state, heroId) {
-  return state.parties.find((party) => party.memberIds.includes(heroId)) || null;
+  const world = ensureContinentState(state);
+  return state.parties.find((party) => party.memberIds.includes(heroId) && world.partyLocations[party.id] === world.heroLocations[heroId]) || null;
 }
 
 export function heroName(state, heroId) {
@@ -17,6 +27,9 @@ export function heroName(state, heroId) {
 }
 
 export function characterState(state, heroId, { currentOperationPhase }) {
+  if (isHeroTraveling(state, heroId)) {
+    return { state: "Traveling", party: "expedition" };
+  }
   const operation = state.operations.find((item) => item.memberIds.includes(heroId));
   if (!operation) {
     return { state: "Idle", party: partyForHero(state, heroId)?.name || "-" };
@@ -35,7 +48,8 @@ export function characterState(state, heroId, { currentOperationPhase }) {
 export function partyMembers(state, party = selectedParty(state)) {
   if (!party) return [];
   const memberIds = new Set(party.memberIds);
-  return state.roster.filter((hero) => memberIds.has(hero.id));
+  const world = ensureContinentState(state);
+  return state.roster.filter((hero) => memberIds.has(hero.id) && world.heroLocations[hero.id] === world.partyLocations[party.id]);
 }
 
 export function isPartyFullyHealed(state, party = selectedParty(state)) {

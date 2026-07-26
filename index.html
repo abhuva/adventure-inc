@@ -26,6 +26,7 @@
         <button class="tab-button" data-tab="population">population</button>
         <button class="tab-button" data-tab="roster">roster</button>
         <button class="tab-button" data-tab="dungeon">dungeon</button>
+        <button class="tab-button" data-tab="continent">continent</button>
         <button class="tab-button" data-tab="temple">temple</button>
         <button class="tab-button" data-tab="systems">systems</button>
       </nav>
@@ -42,6 +43,7 @@
             <aside class="panel map-side-panel">
               <div class="local-tabs">
                 <button class="local-tab-button active" data-map-side-tab="info">info</button>
+                <button id="mapPlanTabBtn" class="local-tab-button hidden" data-map-side-tab="plan" hidden>plan</button>
                 <button class="local-tab-button" data-map-side-tab="operations">operations</button>
                 <button class="local-tab-button" data-map-side-tab="log">log</button>
                 <button class="local-tab-button" data-map-side-tab="dev">dev</button>
@@ -49,6 +51,21 @@
               <div class="local-tab-panel active" data-map-side-panel="info">
                 <h3>Selected Location</h3>
                 <div id="locationDetail" class="location-detail">select a location label on the map</div>
+              </div>
+              <div class="local-tab-panel" data-map-side-panel="plan">
+                <h3>Expedition Plan</h3>
+                <div id="expeditionStatus" class="detail-line">route staging</div>
+                <div id="expeditionRouteDetail" class="location-detail">select an expedition route</div>
+                <div class="form-grid expedition-controls">
+                  <label>
+                    Party
+                    <select id="expeditionPartySelect"></select>
+                  </label>
+                </div>
+                <div id="expeditionPartyDetail" class="location-detail">select a party</div>
+                <div class="row-actions">
+                  <button id="startExpeditionBtn">start expedition</button>
+                </div>
               </div>
               <div class="local-tab-panel" data-map-side-panel="operations">
                 <h3>Active Operations</h3>
@@ -312,6 +329,23 @@
           </div>
         </section>
 
+        <section class="tab-panel" data-tab-panel="continent">
+          <div class="continent-layout">
+            <div class="continent-map-panel">
+              <div id="continentMap" class="continent-map" aria-label="continent map"></div>
+            </div>
+            <aside class="panel continent-side-panel">
+              <div class="panel-head">
+                <h2>Continent</h2>
+                <span id="continentStatus">focused continent</span>
+              </div>
+              <div id="continentDetail" class="location-detail">select a continent</div>
+              <h3>Transfers</h3>
+              <div id="continentTransferRows" class="location-detail">no transfers</div>
+            </aside>
+          </div>
+        </section>
+
         <section class="tab-panel" data-tab-panel="temple">
           <div class="temple-layout">
             <div class="panel temple-board-panel">
@@ -362,6 +396,7 @@
       </main>
     </div>
     <div id="encounterOverlay" class="encounter-overlay hidden" aria-live="polite"></div>
+    <div id="expeditionArrivalOverlay" class="encounter-overlay hidden" aria-live="polite"></div>
 
     <script type="module" src="src/main.js"></script>
   </body>

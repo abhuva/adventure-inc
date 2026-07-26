@@ -26,6 +26,7 @@ export function setupControls({ documentRef, on, el, handlers }) {
   on("simulateBtn", "click", handlers.simulateSelectedRun);
   on("commitBtn", "click", handlers.commitLastEstimate);
   on("autoBtn", "click", handlers.automateLastEstimate);
+  on("startExpeditionBtn", "click", handlers.startSelectedExpedition);
   on("replayFirstBtn", "click", () => handlers.setReplayCursor(0));
   on("replayPrevBtn", "click", () => handlers.setReplayCursor(handlers.replayCursor() - 1));
   on("replayPlayBtn", "click", handlers.toggleReplayPlayback);
@@ -40,6 +41,7 @@ export function setupControls({ documentRef, on, el, handlers }) {
   on("clearLogBtn", "click", handlers.clearLog);
   handlers.setupMapInteractions();
   el.mapPartySelect.addEventListener("change", handlers.onMapPartySelectChange);
+  el.expeditionPartySelect.addEventListener("change", handlers.onExpeditionPartySelectChange);
   el.dungeonSelect.addEventListener("change", handlers.onDungeonSelectChange);
   el.partySelect.addEventListener("change", handlers.onPartySelectChange);
   el.strategySelect.addEventListener("change", handlers.onStrategySelectChange);

@@ -115,6 +115,28 @@ test("dungeon render adapter renders selected dungeon with app state and control
   assert.match(el.replayPartyActors.innerHTML, /Dani/);
 });
 
+test("dungeon render adapter tolerates no selected dungeon", () => {
+  const { documentRef, el } = createHarness();
+  const adapter = createDungeonRenderAdapter({
+    state: createState(),
+    el,
+    documentRef,
+    selectedDungeon: () => undefined,
+    repeatMode: () => "manual",
+    formatReward: () => "none",
+    replaySpeedLabel: () => "1x",
+    portraitStyle: () => "",
+    selectedTargetNodeId: () => "",
+    plannedNodeIds: () => [],
+    conquestState: () => ({ selectedNodeId: null, plannedNodeIds: [] })
+  });
+
+  adapter.renderDungeon();
+
+  assert.match(el.nodeMap.innerHTML, /no local dungeon on this continent/);
+  assert.equal(el.dungeonNodeInfo.textContent, "");
+});
+
 test("dungeon render adapter can refresh only the replay panel", () => {
   const { controls, documentRef, el } = createHarness();
   const state = createState();

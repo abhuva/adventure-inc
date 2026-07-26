@@ -19,7 +19,18 @@ function fakeButton(dataset = {}) {
 }
 
 function fakeElement(buttons = []) {
+  const classes = new Set();
   return {
+    classList: {
+      contains(name) {
+        return classes.has(name);
+      },
+      toggle(name, force) {
+        if (force) classes.add(name);
+        else classes.delete(name);
+      }
+    },
+    hidden: false,
     innerHTML: "",
     querySelectorAll(selector) {
       return selector === "[data-location-id]" ? buttons : [];
@@ -80,6 +91,7 @@ test("renderMapPanel renders map sections and binds POI clicks", () => {
   const el = {
     overlandMap: fakeElement([cellarButton]),
     locationDetail: fakeElement([assignButton]),
+    mapPlanTabBtn: fakeElement(),
     operationRows: fakeElement(),
     poiRows: fakeElement(),
     logRows: fakeElement()
@@ -112,7 +124,8 @@ test("renderMapPanel renders map sections and binds POI clicks", () => {
     renderMapActors: (hourFraction) => calls.push(["actors", hourFraction]),
     hourFraction: 0.5,
     onSelectLocation: (locationId) => calls.push(["select", locationId]),
-    onAssignSelectedParty: () => calls.push("assign")
+    onAssignSelectedParty: () => calls.push("assign"),
+    renderExpeditionPlan: () => calls.push("plan")
   });
 
   assert.match(el.overlandMap.innerHTML, /map-world/);
@@ -131,4 +144,51 @@ test("renderMapPanel renders map sections and binds POI clicks", () => {
     ["select", "cellar"],
     "assign"
   ]);
+});
+
+test("renderMapPanel shows expedition plan tab and renders plan content for expedition POIs", () => {
+  const calls = [];
+  const expedition = {
+    id: "expedition",
+    name: "Expedition",
+    type: "expedition",
+    coord: { x: 200, y: 200 },
+    description: "charter",
+    route: { id: "route-1", name: "Ash Coast Charter", cost: {} }
+  };
+  const el = {
+    overlandMap: fakeElement(),
+    locationDetail: fakeElement(),
+    mapPlanTabBtn: fakeElement(),
+    operationRows: fakeElement(),
+    poiRows: fakeElement(),
+    logRows: fakeElement()
+  };
+
+  renderMapPanel({
+    documentRef: { getElementById: () => null },
+    el,
+    poi: [basePoi()[0], expedition],
+    selectedLocationId: "expedition",
+    selectedLocation: expedition,
+    selectedParty: { id: "party-1", name: "Alpha", memberIds: [] },
+    partyReady: { canQueue: true, message: "ready" },
+    tavernCoord: { x: 100, y: 100 },
+    mapWorld: { width: 2048, height: 1536, backgroundImage: "assets/map-bg.png" },
+    jobs: {},
+    operations: [],
+    repeatedPlans: {},
+    logEntries: [],
+    resources: { food: 1 },
+    currentOperationPhase: () => ({ phase: { name: "queued" }, remaining: 1 }),
+    distanceText: () => "141.4",
+    rewardText: () => "none",
+    heroName: (id) => id,
+    applyMapTransform: () => calls.push("transform"),
+    renderMapActors: () => calls.push("actors"),
+    renderExpeditionPlan: () => calls.push("plan")
+  });
+
+  assert.equal(el.mapPlanTabBtn.hidden, false);
+  assert.deepEqual(calls, ["transform", "actors", "plan"]);
 });

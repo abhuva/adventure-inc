@@ -23,6 +23,19 @@ export function renderDungeonPanel({
   conquestState = {},
   onSelectTargetNode
 }) {
+  if (!dungeon) {
+    el.nodeMap.innerHTML = `<div class="empty-state">no local dungeon on this continent</div>`;
+    el.dungeonNodeInfo.innerHTML = `<div class="empty-state">focus another continent or unlock local dungeons</div>`;
+    el.estimateBox.innerHTML = `<div class="empty-state">no local dungeon available</div>`;
+    renderDungeonReplayOnly({
+      el,
+      documentRef,
+      replay,
+      replaySpeedLabel,
+      portraitStyle
+    });
+    return;
+  }
   const reached = estimate && estimate.dungeonId === dungeon.id ? estimate.reached : 0;
   const failedIndex = estimate && !estimate.success ? estimate.reached : -1;
   el.nodeMap.innerHTML = dungeonNodeGraphHtml({

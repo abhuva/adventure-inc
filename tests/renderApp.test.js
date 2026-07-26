@@ -16,8 +16,10 @@ test("DEFAULT_RENDER_ORDER keeps top-level render sequence stable", () => {
     "parties",
     "roster",
     "dungeon",
+    "continent",
     "temple",
-    "systems"
+    "systems",
+    "arrival"
   ]);
 });
 

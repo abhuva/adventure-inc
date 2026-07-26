@@ -1,13 +1,22 @@
 import { createInitialEventState } from "../game/events/eventRuntime.js";
 import { createInitialWorldProgressionState } from "../game/progression/worldProgression.js";
+import { createInitialContinentState } from "../game/continent/continentState.js";
+import { createStartingResourceState } from "../game/resources/resourceState.js";
 
 export function createInitialState({ templeInventorySlots = 20, replayDefaultMs = 650 } = {}) {
+  const resources = createStartingResourceState();
   return {
     day: 1,
     hour: 0,
     timeRunning: true,
     events: createInitialEventState(),
     progression: createInitialWorldProgressionState(),
+    world: {
+      ...createInitialContinentState(),
+      resourcesByContinent: { old_marches: resources },
+      heroLocations: { ada: "old_marches" },
+      partyLocations: { "party-1": "old_marches" }
+    },
     tavern: {
       capacity: 3,
       visitorSeats: 3,
@@ -28,16 +37,7 @@ export function createInitialState({ templeInventorySlots = 20, replayDefaultMs 
       productionMultiplier: 1,
       workSiteUpgrades: { wood: 0, ore: 0 }
     },
-    resources: {
-      coin: 10,
-      food: 6,
-      wood: 8,
-      ore: 4,
-      hide: 0,
-      planks: 0,
-      comfort_goods: 0,
-      training_bow: 0
-    },
+    resources,
     roster: [
       {
         id: "ada",

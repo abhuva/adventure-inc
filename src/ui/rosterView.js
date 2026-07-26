@@ -22,7 +22,8 @@ export function compactStateLabel(stateLabel) {
     "Walking to dungeon": "WD",
     "Fighting": "FG",
     "Walking home": "WH",
-    "Recovering": "RC"
+    "Recovering": "RC",
+    "Traveling": "TR"
   };
   return labels[stateLabel] || stateLabel.slice(0, 2).toUpperCase();
 }

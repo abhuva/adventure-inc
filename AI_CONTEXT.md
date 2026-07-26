@@ -24,24 +24,25 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
 - Required DOM element contract lives in `src/app/domElements.js`.
 - App config owner: `src/app/appConfig.js` owns stable prototype UI/runtime constants such as character-atlas dimensions, map background fallback path/dimensions, map zoom defaults, Temple inventory slots, and replay default speed.
 - Control binding owner: `src/app/controlBindings.js` wires static DOM controls to injected app command handlers.
-- App control setup owner: `src/app/appControlSetup.js` composes the static control-binding handler map from shell, dungeon, party, replay, roster/tavern, and time command owners.
+- App control setup owner: `src/app/appControlSetup.js` composes the static control-binding handler map from shell, dungeon, expedition, party, replay, roster/tavern, and time command owners.
 - App data context owner: `src/app/appDataContext.js` owns loaded POI data storage for bootstrap writes and query reads.
 - App query owner: `src/app/appQueries.js` centralizes app-level reads for POI-derived collections, selected dungeon/location/party, focused hero, party members/stats/readiness, operation phase projection, and roster status labels.
 - App query setup owner: `src/app/appQuerySetup.js` composes loaded POI data, Temple query reads, and the app selection facade.
 - App selection facade owner: `src/app/appSelectionFacade.js` composes app queries with roster skill progression projections so UI/app adapters receive one small read surface.
 - App utility callback owner: `src/app/appUtilityCallbacks.js` owns app-level log insertion, reward formatting, Temple progression/loot callbacks, and replay timer API creation.
-- App render coordinator owner: `src/app/appRenderHandlers.js` owns top-level render ordering and focused render pass delegation across header, map, roster, dungeon, Temple, and systems adapters.
+- App render coordinator owner: `src/app/appRenderHandlers.js` owns top-level render ordering and focused render pass delegation across header, map, roster, dungeon, Continent, Temple, systems, and Expedition arrival adapters.
 - App shell command owner: `src/app/appShellCommandHandlers.js` coordinates UI-only shell commands: clear log, top-tab activation, map-side-tab activation, Tavern/Roster/Map local detail-tab activation, and dungeon/party select-change estimate invalidation.
 - First-step encounter command owner: `src/app/eventCommandHandlers.js` coordinates tutorial encounter triggering, close actions, tab-routing actions, and auto-time pause/resume behavior around blocking encounters.
 - Browser timer adapter owner: `src/app/browserTimerAdapters.js` binds browser `window`/`performance` APIs into auto-time and replay timer interfaces.
 - App map interaction setup owner: `src/app/appMapInteractionSetup.js` maps app state/config/render callbacks into overland map pointer and wheel bindings. It must pass `state.mapView` as a getter, not a captured object, because autosave restore replaces `state.mapView` during startup.
 - Dungeon command adapter owner: `src/app/dungeonCommandHandlers.js` coordinates dungeon simulation, cached estimate replay replacement, commit scheduling, repeated-plan automation, repeated queue attempts, operation completion logging, and injected reward/XP/Temple callbacks.
-- Map command adapter owner: `src/app/mapCommandHandlers.js` coordinates map-location selection, transient dungeon context-menu state, Dungeon control sync, estimate invalidation for selected dungeon POIs, full repeated run setup, immediate simulation, first queue attempt, and Dungeon-tab routing.
+- Map command adapter owner: `src/app/mapCommandHandlers.js` coordinates map-location selection, transient dungeon/expedition context-menu state, Dungeon control sync, estimate invalidation for selected dungeon POIs, full repeated run setup, immediate simulation, first queue attempt, Dungeon-tab routing, and Expedition POI routing.
+- Expedition command adapter owner: `src/app/expeditionCommandHandlers.js` coordinates Expedition route/party selection, start-expedition validation and mutation, arrival prompt resolution, and Continent focus switching.
 - Replay command adapter owner: `src/app/replayCommandHandlers.js` coordinates replay cursor/playback/speed commands, browser timer injection, full render vs replay-only render decisions, and replay speed labels.
 - Roster/tavern command adapter owner: `src/app/rosterTavernCommandHandlers.js` coordinates recruit, selected Tavern visitor inspection, focus, roster-view toggle, crafting, tavern upgrade, worker hiring/assignment, workshop recipe/upgrades, log messages, and renders.
 - Party command adapter owner: `src/app/partyCommandHandlers.js` coordinates party command wrappers, log messages, party-select refresh, and renders.
 - Select-control owner: `src/app/selectControls.js` owns app-level dungeon, stop-node, and party select population.
-- Time command adapter owner: `src/app/timeCommandHandlers.js` coordinates auto-time toggling, hour advancement, worker deliveries, operation ticking/completion, daily production, repeated-plan resume checks, log messages, and renders.
+- Time command adapter owner: `src/app/timeCommandHandlers.js` coordinates auto-time toggling, hour advancement, worker deliveries, operation ticking/completion, expedition transfer ticking/arrival logging, daily production, repeated-plan resume checks, log messages, and renders.
 - Header render adapter owner: `src/app/headerRenderAdapter.js` coordinates global title-row rendering with current state, selected party, and the auto-time control lookup.
 - Systems render adapter owner: `src/app/systemsRenderAdapter.js` coordinates Systems blueprint rendering with blueprint definitions and unlocked blueprint state.
 - Log runtime owner: `src/app/logRuntime.js` owns deterministic log entry stamping, newest-first insertion, cap enforcement, and clearing.
@@ -58,10 +59,10 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
 - Core helpers live under `src/core/`.
 - POI loading and validation live under `src/data/`.
 - POI read selectors and map-location composition live in `src/data/poiSelectors.js`.
-- POI source data remains complete, but visible dungeons/work sites/map locations are filtered through `state.progression.unlockedLocations`.
-- Worker route marker interpolation lives in `src/game/map/mapActorRuntime.js`.
-- Map pan/zoom/drag view-state math lives in `src/game/map/mapViewRuntime.js`; DOM pointer capture and map event registration live in `src/app/mapInteractions.js`. Map interactions resolve the current map view through an injected getter so drag/zoom still work after save restore replaces map-view state. Map background dimensions are loaded from `assets/map-bg.png` at bootstrap through `src/app/mapBackgroundRuntime.js`; POI coordinates are source-image pixel coordinates, and the `.map-world` DOM uses CSS variables for the loaded image width/height instead of a fixed `1024x1024` size.
-- Map render adapter owner: `src/app/mapRenderAdapter.js` coordinates overland map panel rendering, map transform/status text, actor-layer refresh, selected-location detail refresh, map-distance formatting, and worker marker coordinates.
+- POI source data remains complete, but visible dungeons/work sites/map locations are filtered through `state.progression.unlockedLocations`, Expedition route unlock state, and the currently focused continent.
+- Map pan/zoom/drag view-state math lives in `src/game/map/mapViewRuntime.js`; DOM pointer capture and map event registration live in `src/app/mapInteractions.js`. Map interactions resolve the current map view through an injected getter so drag/zoom still work after save restore replaces map-view state. Continent-specific map background dimensions are loaded at bootstrap through `src/app/mapBackgroundRuntime.js`: Old Marches uses `assets/map-bg.png`, Ash Coast uses `assets/map-ash-coast.png`, and the focused continent selects the active map world. POI coordinates are source-image pixel coordinates, and the `.map-world` DOM uses CSS variables for the loaded image width/height instead of a fixed `1024x1024` size.
+- Map render adapter owner: `src/app/mapRenderAdapter.js` coordinates overland map panel rendering, map transform/status text, party actor-layer refresh, selected-location detail refresh, map-distance formatting, and Expedition POI run routing.
+- Expedition render adapter owner: `src/app/expeditionRenderAdapter.js` coordinates the Map side-panel Expedition Plan view, Continent tab, and arrival popup rendering from continent state.
 - Roster render adapter owner: `src/app/rosterRenderAdapter.js` coordinates Tavern visitor queue/detail rendering, Population job rendering, party/focused-character panel rendering, roster card rendering, and shared atlas portrait helpers.
 - Dungeon render adapter owner: `src/app/dungeonRenderAdapter.js` coordinates Dungeon planner and replay-only rendering with selected dungeon, cached estimate, repeated plans, repeat mode, reward formatting, replay speed labels, and roster portrait styling.
 - Roster static data and stat rules live under `src/game/roster/`.
@@ -70,6 +71,7 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
 - Crafting helpers live in `src/game/roster/craftingCommands.js`.
 - Generic node-based progression graph helpers live under `src/game/progression/` and own graph normalization, root/connected-node unlock checks, effect aggregation, and generic spend/refund mutations.
 - World progression gates live in `src/game/progression/worldProgression.js`; it owns initial visible locations, population location reveals, dungeon clear counters, and the Rat Cellar 50-clear fallback unlock for Old Copper Mine. Old Barracks now unlocks through Old Copper Mine boss conquest.
+- Continent/expedition ownership lives under `src/game/continent/`: `continentData.js` defines `old_marches`, `ash_coast`, and the first safe `old_marches_to_ash_coast` route; `continentState.js` owns focused continent, unlocked continents/routes, hero and party continent locations, expedition transfers, pending arrivals, and deterministic time-away catch-up reports.
 - Skill availability/progression checks live in `src/game/roster/skillProgression.js`, which adapts character race/job skill data onto the generic progression graph rules, including optional per-rank node costs.
 - Hero XP and level-up mutation lives in `src/game/roster/leveling.js`.
 - Party read selectors, hero-name fallback, character status derivation, and party stat aggregation live in `src/game/party/partySelectors.js`.
@@ -92,6 +94,7 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
 - Dungeon operation elapsed-time ticking lives in `src/game/dungeon/operationRuntime.js`.
 - Repeated-plan automation decisions live in `src/game/dungeon/repeatedPlanAutomation.js`.
 - Dungeon combat replay runtime controls live in `src/game/dungeon/replayRuntime.js`; it owns replay cursor clamping, reset/stop/start/toggle, speed cycling, and speed labels with injected timer APIs for browser/runtime use.
+- Resource defaults live in `src/game/resources/resourceState.js`. Resources are local per continent under `state.world.resourcesByContinent`; `state.resources` is the compatibility alias for the currently focused continent's stockpile. Continent focus calls activate this alias, so existing costs, rewards, workshop production, dungeon food spending, and UI resource reads operate on the focused continent only.
 - Resource runtime owner: `src/app/resourceRuntime.js` adapts app state to generic resource affordability, payment, and reward mutation helpers.
 - Generic resource costs/reward application and Temple loot projection live in `src/game/resources/resourceRewards.js`.
 - Tavern upgrade helpers live in `src/game/tavern/tavernCommands.js`; worker assignment delegates to `src/game/settlement/workforceModel.js`.
@@ -102,17 +105,18 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
 - Auto-time interval ownership and visual tick interpolation helpers live in `src/game/time/autoTimeRuntime.js`; app composition injects browser timer APIs. Bootstrap starts auto-time by default after POI/autosave load and the first render.
 - Hour-step advancement sequencing lives in `src/game/time/timeAdvanceRuntime.js`; app command adapters own side-effect callbacks for workers, operations, day rollover upkeep/refresh, logs, and rendering.
 - Daily production mutation and repeated-plan resume candidate selection live in `src/game/time/dailyProductionRuntime.js`; app command adapters own logging and queue attempts.
-- Save/load owner: `src/app/saveLoad.js` creates versioned schema `1` payloads, restores supported payloads, persists first-step encounter seen/queue state plus Tavern/Roster UI detail selections, and excludes transient runtime state such as replay timers and derived map background dimensions. Browser local persistence owner: `src/app/localSaveRuntime.js` saves to `localStorage` key `adventure-inc:save:v1`, loads once during bootstrap after POI data, debounces autosaves from render/tick paths, and supports Systems `save now` / `reset local save`.
+- Save/load owner: `src/app/saveLoad.js` creates versioned schema `1` payloads, restores supported payloads, persists first-step encounter seen/queue state, continent/expedition world state, Tavern/Roster UI detail selections, and excludes transient runtime state such as replay timers and derived map background dimensions. Browser local persistence owner: `src/app/localSaveRuntime.js` saves to `localStorage` key `adventure-inc:save:v1`, loads once during bootstrap after POI data, debounces autosaves from render/tick paths, and supports Systems `save now` / `reset local save`.
 - Basic DOM lookup and event binding helpers live in `src/ui/dom.js`.
 - Tab activation class toggling lives in `src/ui/tabRuntime.js` for top-level tabs and Map, Tavern, Roster, Dungeon, and Population local tabs.
-- Top-level render ordering lives in `src/ui/renderApp.js`; `src/app.js` still provides the individual render adapters and invokes the orchestrator.
-- Routine auto-time ticks must use the scoped `renderTimeTick()` path instead of full `render()`. Full tick renders can replace clicked DOM between pointerdown/click and cause intermittent missed clicks in Roster, Map assignment, and similar panels. Stable high-interaction surfaces should prefer delegated handlers on persistent parent containers. Quiet day rollovers pass `dayRolledOver` into scoped rendering so the active Tavern tab refreshes visitor cards when availability changes.
+- Top-level render ordering lives in `src/ui/renderApp.js`; `src/app.js` still provides the individual render adapters and invokes the orchestrator. Top-level tabs now include Map, Tavern, Population, Roster, Dungeon, Expedition, Continent, Temple, and Systems.
+- Routine auto-time ticks must use the scoped `renderTimeTick()` path instead of full `render()`. Full tick renders can replace clicked DOM between pointerdown/click and cause intermittent missed clicks in Roster, Map assignment, and similar panels. Stable high-interaction surfaces should prefer delegated handlers on persistent parent containers. Quiet day rollovers pass `dayRolledOver` into scoped rendering so the active Tavern tab refreshes visitor cards when availability changes. When the active tab is Roster, scoped ticks refresh party rows, roster cards, and focused-character detail so operation state stays live without requiring a click.
 - Select option rendering helpers live in `src/ui/selectView.js` for dungeon, stop-node, and party selects.
 - Dungeon panel DOM rendering lives in `src/ui/dungeonPanel.js`; pure Dungeon node/estimate/replay row HTML remains in `src/ui/dungeonView.js`, including the quick stats/transcript estimate inspector, and replay controls remain in `src/ui/dungeonReplayPanel.js`.
 - Dungeon replay panel DOM rendering lives in `src/ui/dungeonReplayPanel.js`; pure replay row/empty-state HTML remains in `src/ui/dungeonView.js`.
 - Party/focused-character panel DOM rendering lives in `src/ui/partyPanel.js`; pure party, character skill tree, skill hover detail panels, and focused-character HTML remains in `src/ui/rosterView.js`. Generic node graph HTML rendering lives in `src/ui/progressionGraphView.js`.
 - Roster card panel DOM rendering lives in `src/ui/rosterPanel.js`; pure roster/card HTML remains in `src/ui/rosterView.js`.
-- Map panel DOM rendering lives in `src/ui/mapPanel.js`; it also renders deterministic log rows into the Map side-panel Log tab. Pure Map side-panel HTML remains in `src/ui/mapSideView.js`, and pure Map world/route/actor/context-menu HTML remains in `src/ui/mapWorldView.js`.
+- Map panel DOM rendering lives in `src/ui/mapPanel.js`; it renders the selected-location info, the conditional Expedition Plan side-tab, operations, POI rows, and deterministic log rows into the Map side panel. Pure Map side-panel HTML remains in `src/ui/mapSideView.js`, and pure Map world/route/actor/context-menu HTML remains in `src/ui/mapWorldView.js`.
+- Expedition Plan, Continent panel, and arrival popup DOM rendering lives in `src/ui/expeditionPanel.js`; pure Expedition route, party manifest, Continent summary, transfer rows, and arrival prompt HTML lives in `src/ui/expeditionView.js`.
 - Systems panel DOM rendering lives in `src/ui/systemsPanel.js`; pure blueprint row HTML remains in `src/ui/blueprintView.js`, and pure log row HTML remains in `src/ui/logView.js` for the Map Log tab.
 - Temple panel DOM rendering lives in `src/ui/templePanel.js`; pure Temple board/shard/detail HTML remains in `src/ui/templeView.js`, and drag/drop binding remains in `src/app/templeInteractions.js`.
 - First extracted UI render helpers live under `src/ui/`: `headerView.js` owns the global title/status row, `encounterView.js` owns first-step encounter HTML, `encounterPanel.js` owns encounter overlay rendering/action delegation, `rewardText.js` owns reward formatting, `blueprintView.js` owns blueprint-row HTML, `logView.js` owns deterministic log-row HTML, `populationView.js` owns Population job rows and the gathered-resource side panel, `tavernView.js` owns the Tavern upgrade hover panel, visitor queue, and read-only visitor detail/skill panels, `dungeonView.js` owns Dungeon node/estimate/replay HTML builders, `mapSideView.js` owns Map side-panel selected-location, operation, and POI table HTML, `mapWorldView.js` owns Map route/POI/world/actor marker HTML builders, `rosterView.js` owns Roster/party/skill/focused-character HTML builders, and `templeView.js` owns Temple board, stone, socket, shard token, inventory, buff, and detail HTML builders.
@@ -124,7 +128,7 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
 - App render adapters orchestrate full rendering through `src/app/appRenderHandlers.js` and `src/ui/renderApp.js`.
 - The simulation is deterministic and advances through explicit hour ticks. Time can be stepped manually; auto-time starts by default on bootstrap and can be toggled off from the title row.
 - Map movement is presentation-only interpolated with `requestAnimationFrame` between hourly ticks; gameplay rewards and operation completion still happen only on deterministic hour advancement.
-- The main UI uses seven top tabs: Map, Tavern, Population, Roster, Dungeon, Temple, and Systems.
+- The main UI uses eight top tabs: Map, Tavern, Population, Roster, Dungeon, Continent, Temple, and Systems. Expedition planning lives in the Map side panel.
 - A compact centered encounter overlay introduces first-step mechanics. It uses the same dense dev-tool visual language and does not replace the Systems log.
 - The first tutorial flow is dungeon-first: founder/tavern charter, Rat Cellar map run, Dungeon readout, Tavern recruitment, Roster party setup, then Population/Workshop. Temple onboarding is delayed until the second dungeon reveal.
 
@@ -160,6 +164,9 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
   - wood
   - ore
   - hide
+  - planks
+  - comfort goods
+  - training bows
 - Roster:
   - starting founder adventurer
   - deterministic visitor queue with 48 recruitable adventurers
@@ -203,6 +210,16 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
   - fame
   - blueprints
   - deterministic crafting
+- Continents and Expeditions:
+  - `old_marches` is the starting continent and `ash_coast` is the first destination
+  - `old_marches_to_ash_coast` unlocks deterministically on day 7 and renders as an `Expedition` POI on the Old Marches Map
+  - clicking the Expedition POI opens the Map side-panel `Plan` tab
+  - the Map-side Expedition Plan lets the player select a local party, inspect the manifest, validate route/cost/readiness, and start travel
+  - starting an expedition creates a deterministic transfer, marks the party/heroes as traveling, removes them from origin-local Roster/Party/Dungeon eligibility, and preserves hero records
+  - arriving expeditions unlock the destination continent, station the party/heroes there, and show a switch/stay arrival popup
+  - Continent tab uses `assets/continent-bg.png` as a left-side overview map with clickable continent markers, a right-side detail panel, and a `switch`/`cancel` context menu for unlocked non-focused continents
+  - focus switching records deterministic time-away catch-up hours and logs a placeholder report; remote passive production/resource catch-up is not implemented yet
+  - expedition costs currently pay from the existing global resource pool because resources have not yet been split per continent
 - Temple:
   - selectable Ritual Stones: Triangle, Square, and Hourglass
   - each stone owns its own sockets, active links, inventory slot positions, and stone-level modifier
@@ -263,11 +280,13 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
   - Old Copper Mine unlocks after 50 successful Rat Cellar clears or Rat Cellar boss conquest
   - Old Barracks unlocks after all three Old Copper Mine branch bosses are cleared
   - visible work sites and dungeons render as simple labeled POIs
+  - the day-7 Expedition POI renders as a non-dungeon Map location on Old Marches and opens the Map side-panel Plan tab
+  - focusing Ash Coast currently shows a destination camp only; Ash Coast dungeons/work sites are future content
   - POI labels are clickable and populate the selected-location side panel
   - the Map toolbar is compact and only shows inline `Selected Party` plus the party select synchronized with the Dungeon selected party
   - dungeon POIs open a small context menu at the clicked position with `run` and `cancel`
   - `run` schedules the selected party now as a full repeated route, performs the first simulation, and switches to the Dungeon tab for inspection
-  - worker markers travel between tavern and work sites
+  - worker production is not represented by moving map markers
   - party markers travel to dungeon POIs, pulse while busy, and return to the tavern
 
 ## Important Runtime Rules
@@ -282,6 +301,12 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
 - `scheduleEstimate()` queues a party operation and pays food up front.
 - Manual Dungeon Planner assignments stop that party's repeated plan before queueing the new assignment; active operations are not cancelled.
 - Map-side dungeon `run` creates/replaces a full-route repeated plan for the selected party, simulates immediately, switches to the Dungeon tab, and queues through `ensureRepeatedPlanQueued()`.
+- Map-side Expedition selection/context `run` selects the associated route and opens the Map side-panel Plan tab; it does not schedule a dungeon plan.
+- `startExpeditionTransfer()` in `src/game/continent/continentState.js` validates unlocked route, local origin party, non-empty members, no active operation, available resources, then creates a transfer and marks party/heroes as `travel:<transferId>`.
+- Traveling heroes are hidden from focused-continent Roster cards and local party selectors; historical references use character state `Traveling`.
+- `advanceExpeditionTransfers()` ticks transfer elapsed hours through the normal hourly time path and creates a pending arrival when complete.
+- Arrival prompts are focus choices only: switching or staying does not reroll or alter the deterministic arrival outcome.
+- `focusContinent()` sets the focused continent and records a deterministic time-away catch-up report. Current catch-up is a placeholder report because economy/resource ownership is still global.
 - Dungeon graph planning uses stop values shaped as `path:<nodeId>,<nodeId>`, resolves a legal deterministic path through `dungeonRouteForStop()`, and follows the same repeated-plan update semantics as strategy changes. Legacy `node:<nodeId>` target values still work from the Info select.
 - Dungeon completion applies conquest effects from reached nodes, even when a later planned node fails. Preview simulation reads conquest state but never mutates it.
 - Completed successful dungeon operations increment dungeon clear counters. Rat Cellar clear 50 reveals Old Copper Mine as a fallback. Old Barracks is revealed by clearing all three Old Copper Mine branch bosses.
@@ -340,7 +365,7 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
 - The Dungeon tab route surface is a compact conquest graph, not a flat room list. Clicking graph nodes builds or truncates a legal planned path and reruns the deterministic estimate; clicking locked/unreachable nodes selects them for the info drawer without replacing the current plan.
 - The Dungeon tab estimate area should prioritize quick party/dungeon/strategy/result/node/time/food/HP/reward stats plus the time/combat transcript.
 - Dungeon estimates include route and Resolve information.
-- The Temple tab is a board-style management surface: Ritual Stone selector buttons, Temple Matrix with clickable links, bottom shard inventory rows, and selected Shard Info side panel.
+- The Temple tab is a board-style management surface: Ritual Stone selector buttons, Temple Matrix with clickable links, bottom shard inventory rows, and selected Shard Info side panel. Triangle Stone uses `assets/altar-triangle.png` as its matrix background, with socket coordinates aligned to the carved pads in that image.
 - The Map tab uses `assets/map-bg.png` as the actual overland map surface inside a transformed `.map-world`; POIs, route lines, workers, and party markers use the same pixel world coordinates.
 
 ## Current Non-Goals
@@ -375,8 +400,8 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
 - `docs/dungeon-progression-redesign.md`: dungeon-first onboarding, world visibility gates, route graphs, Resolve, unique bosses, dungeon mastery, and unlock ownership.
 - `docs/temple-shard-design.md`: Temple board, shard slot/influence rules, deterministic shard drops, shard XP, and first implementation status.
 - `docs/dungeon-combat-replay-design.md`: deterministic actor-timeline combat resolver and inspection-only replay UI.
-- `docs/continent-expansion-design.md`: open multi-continent expansion design, Expedition POI trigger, Expedition tab launch flow, arrival switch/stay popup, Continent tab focus switching, active/focused continent model, deterministic catch-up, costly transfers, fatal route loss choices, memorials, and continent rule modifiers.
-- `docs/continent-expansion-implementation-plan.md`: phased implementation plan for continent/route data, day-7 Expedition POI unlock, Map routing, Expedition tab skeleton, world shell, active-continent state migration, catch-up, hero stationing, transfers, fatal route resolution, and Training Grounds.
+- `docs/continent-expansion-design.md`: open multi-continent expansion design, Expedition POI trigger, Map-side Expedition Plan flow, arrival switch/stay popup, Continent tab focus switching, active/focused continent model, deterministic catch-up, costly transfers, fatal route loss choices, memorials, and continent rule modifiers.
+- `docs/continent-expansion-implementation-plan.md`: phased implementation plan for continent/route data, day-7 Expedition POI unlock, Map routing, Map-side Expedition Plan surface, world shell, active-continent state migration, catch-up, hero stationing, transfers, fatal route resolution, and Training Grounds.
 
 ## Verification
 
@@ -389,8 +414,8 @@ npm test
 
 Last validation result:
 
-- `npm run check:js`: passed, checked 131 JavaScript files.
-- `npm test`: passed, 362/362 tests.
+- `npm run check:js`: passed, checked 137 JavaScript files.
+- `npm test`: passed, 372/372 tests.
 
 Manual browser smoke test:
 

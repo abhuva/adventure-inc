@@ -5,6 +5,7 @@ export function createAppRenderHandlers({
   mapRenderAdapter,
   rosterRenderAdapter,
   dungeonRenderAdapter,
+  expeditionRenderAdapter,
   templeRenderAdapter,
   systemsRenderAdapter,
   eventRenderAdapter
@@ -49,6 +50,14 @@ export function createAppRenderHandlers({
     eventRenderAdapter.renderEncounter();
   }
 
+  function renderContinent() {
+    expeditionRenderAdapter.renderContinent();
+  }
+
+  function renderArrival() {
+    expeditionRenderAdapter.renderArrival();
+  }
+
   return {
     render() {
       renderAppSections({
@@ -60,8 +69,10 @@ export function createAppRenderHandlers({
         parties: renderParties,
         roster: renderRoster,
         dungeon: renderDungeon,
+        continent: renderContinent,
         temple: renderTemple,
-        systems: renderSystems
+        systems: renderSystems,
+        arrival: renderArrival
       });
     },
     renderTimeTick(activeTab, hourFraction = 0, { dayRolledOver = false } = {}) {
@@ -78,7 +89,17 @@ export function createAppRenderHandlers({
       if (activeTab === "dungeon") {
         dungeonRenderAdapter.renderDungeonReplay();
       }
+      if (activeTab === "roster") {
+        rosterRenderAdapter.renderParties();
+        rosterRenderAdapter.renderRoster();
+      }
+      if (activeTab === "continent") {
+        expeditionRenderAdapter.renderContinent();
+      }
+      expeditionRenderAdapter.renderArrival();
     },
+    renderArrival,
+    renderContinent,
     renderDungeon,
     renderEncounter,
     renderDungeonReplay() {

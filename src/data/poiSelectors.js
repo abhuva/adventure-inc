@@ -1,10 +1,12 @@
 import { isLocationUnlocked } from "../game/progression/worldProgression.js";
+import { focusedContinent, visibleExpeditionPois } from "../game/continent/continentState.js";
 
 export function dungeonsFromPoi(poiData) {
   return poiData?.dungeons || [];
 }
 
 export function visibleDungeonsFromPoi(poiData, state) {
+  if (focusedContinent(state).id !== "old_marches") return [];
   return dungeonsFromPoi(poiData).filter((dungeon) => isLocationUnlocked(state, dungeon.id));
 }
 
@@ -13,6 +15,7 @@ export function workSitesFromPoi(poiData) {
 }
 
 export function visibleWorkSitesFromPoi(poiData, state) {
+  if (focusedContinent(state).id !== "old_marches") return [];
   return workSitesFromPoi(poiData).filter((site) => isLocationUnlocked(state, site.id));
 }
 
@@ -47,8 +50,19 @@ export function mapLocationsFromPoi(poiData) {
 
 export function visibleMapLocationsFromPoi(poiData, state) {
   if (!poiData?.tavern) return [];
+  const continent = focusedContinent(state);
+  if (continent.id !== "old_marches") {
+    return [{
+      ...poiData.tavern,
+      name: `${continent.name} Camp`,
+      coord: { x: 512, y: 512 },
+      type: "tavern",
+      description: continent.description
+    }];
+  }
   return [
     { ...poiData.tavern, type: "tavern" },
+    ...visibleExpeditionPois(state),
     ...visibleWorkSitesFromPoi(poiData, state).map((site) => ({
       ...site,
       type: "work",

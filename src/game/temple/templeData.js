@@ -8,13 +8,14 @@ export const TEMPLE_STONES = {
   triangle: {
     name: "Triangle Stone",
     unlocked: true,
+    boardClass: "altar-triangle",
     maxActiveLines: 1,
     modifierText: "Fight color effects +10%",
     modifiers: [{ type: "effect_family_power", family: "fight", multiplier: 1.1 }],
     sockets: [
-      { colorId: "ember", x: 50, y: 20 },
-      { colorId: "verdant", x: 22, y: 72 },
-      { colorId: "azure", x: 78, y: 72 }
+      { colorId: "ember", x: 50, y: 28.5 },
+      { colorId: "verdant", x: 25.2, y: 62.6 },
+      { colorId: "azure", x: 74.8, y: 62.6 }
     ],
     links: [["ember", "verdant"], ["verdant", "azure"], ["azure", "ember"]]
   },

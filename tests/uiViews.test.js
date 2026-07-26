@@ -22,8 +22,7 @@ import {
   mapPoiButtonHtml,
   mapRouteHtml,
   mapWorldHtml,
-  partyActorHtml,
-  workerActorHtml
+  partyActorHtml
 } from "../src/ui/mapWorldView.js";
 import { populationJobRowsHtml, populationResourceRowsHtml, renderPopulationJobs } from "../src/ui/populationView.js";
 import { progressionGraphHtml } from "../src/ui/progressionGraphView.js";
@@ -833,24 +832,6 @@ test("mapWorldHtml renders dungeon context menu", () => {
   assert.match(html, /data-map-context-action="cancel"/);
 });
 
-test("workerActorHtml renders only assigned workers", () => {
-  assert.equal(workerActorHtml({
-    site: { name: "Woodlot" },
-    count: 0,
-    coord: { x: 1, y: 2 }
-  }), "");
-
-  const html = workerActorHtml({
-    site: { name: "Woodlot" },
-    count: 2,
-    coord: { x: 10, y: 20 }
-  });
-
-  assert.match(html, /map-actor worker/);
-  assert.match(html, /Woodlot workers: 2/);
-  assert.match(html, /left:10px;top:20px/);
-});
-
 test("partyActorHtml marks busy party phases", () => {
   const html = partyActorHtml({
     operation: { label: "Alpha: Rat Cellar" },
@@ -868,13 +849,8 @@ test("partyActorHtml marks busy party phases", () => {
   assert.match(html, /Alpha: Rat Cellar: dungeon/);
 });
 
-test("mapActorsHtml combines worker and party actors", () => {
+test("mapActorsHtml renders party actors without worker markers", () => {
   const html = mapActorsHtml({
-    workSites: [
-      { id: "wood", name: "Woodlot" }
-    ],
-    jobs: { wood: 1 },
-    workerCoord: () => ({ x: 20, y: 30 }),
     operations: [
       { label: "Alpha", partyId: "party_alpha" }
     ],
@@ -892,7 +868,7 @@ test("mapActorsHtml combines worker and party actors", () => {
     })
   });
 
-  assert.match(html, /map-actor worker/);
+  assert.doesNotMatch(html, /map-actor worker/);
   assert.match(html, /map-actor party/);
   assert.match(html, /left:5px;top:0px/);
 });
@@ -1172,6 +1148,7 @@ test("temple status and stone buttons render active/unlocked states", () => {
 
 test("temple board, links, and sockets render board elements", () => {
   const stone = {
+    boardClass: "altar-triangle",
     sockets: [
       { id: "ember", colorId: "red", label: "Ember", x: 10, y: 20 }
     ],
@@ -1205,6 +1182,7 @@ test("temple board, links, and sockets render board elements", () => {
   assert.match(socket, /temple-socket connected/);
   assert.match(socket, /drop shard/);
   assert.match(board, /drag shards onto colored sockets/);
+  assert.match(board, /temple-board-surface altar-triangle/);
   assert.match(board, /temple-link-layer/);
 });
 

@@ -16,14 +16,16 @@ export function templeStoneButtonsHtml({ stones, activeStoneId }) {
 
 export function templeBoardHtml({ stone, linksHtml, socketsHtml }) {
   return `
-    <div class="temple-help">
-      <div>drag shards onto colored sockets</div>
-      <div>click a link to enable it; click active link to disable</div>
+    <div class="temple-board-surface ${stone.boardClass || "temple-board-grid"}">
+      <div class="temple-help">
+        <div>drag shards onto colored sockets</div>
+        <div>click a link to enable it; click active link to disable</div>
+      </div>
+      <svg class="temple-link-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        ${linksHtml}
+      </svg>
+      ${stone.sockets.map((socket) => socketsHtml(socket, stone)).join("")}
     </div>
-    <svg class="temple-link-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      ${linksHtml}
-    </svg>
-    ${stone.sockets.map((socket) => socketsHtml(socket, stone)).join("")}
   `;
 }
 

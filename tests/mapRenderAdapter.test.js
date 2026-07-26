@@ -68,7 +68,6 @@ function createHarness() {
       dungeon: { id: "cellar" }
     }
   ];
-  const workSites = [{ id: "wood", name: "North Woodlot", coord: { x: 200, y: 100 }, cycleHours: 4 }];
   const documentRef = {
     getElementById(id) {
       if (id === "mapWorld") return mapWorld;
@@ -82,7 +81,6 @@ function createHarness() {
     el,
     documentRef,
     mapWorld: () => ({ width: 2048, height: 1024, backgroundImage: "assets/map-bg.png" }),
-    workSites: () => workSites,
     tavernCoord: () => poi[0].coord,
     mapLocations: () => poi,
     selectedLocation: () => poi.find((item) => item.id === state.selectedLocationId),
@@ -110,12 +108,12 @@ test("map render adapter applies transform and status text", () => {
   assert.match(el.mapStatus.textContent, /world 2048x1024/);
 });
 
-test("map render adapter renders actor layer from workers", () => {
+test("map render adapter omits worker markers from actor layer", () => {
   const { adapter, mapActors } = createHarness();
 
   adapter.renderMapActors(0.25);
 
-  assert.match(mapActors.innerHTML, /North Woodlot workers: 1/);
+  assert.equal(mapActors.innerHTML, "");
 });
 
 test("map render adapter renders selected location detail and binds assignment", () => {

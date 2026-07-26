@@ -160,15 +160,18 @@ pre {
   position: sticky;
   top: 34px;
   z-index: 2;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
   gap: 0;
   border-bottom: 1px solid var(--line-hot);
   background: #0d120e;
 }
 
 .tab-button {
+  flex: 0 0 auto;
   height: 34px;
+  padding: 0 14px;
   border-width: 0 1px 0 0;
   border-color: var(--line);
   background: #111711;
@@ -259,6 +262,92 @@ pre {
   gap: 0;
   align-items: stretch;
   min-height: calc(100vh - 68px);
+}
+
+.expedition-layout,
+.continent-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  gap: 0;
+  align-items: stretch;
+  min-height: calc(100vh - 68px);
+}
+
+.expedition-layout .panel,
+.continent-layout .panel {
+  max-width: none;
+}
+
+.expedition-side-panel,
+.continent-side-panel {
+  position: sticky;
+  top: 68px;
+}
+
+.continent-map-panel {
+  min-width: 0;
+}
+
+.continent-map {
+  position: relative;
+  min-height: calc(100vh - 68px);
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  background: #080b08;
+}
+
+.continent-world {
+  position: absolute;
+  inset: 0;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: url("assets/continent-bg.png") center / 100% 100% no-repeat;
+}
+
+.continent-marker {
+  position: absolute;
+  min-width: 106px;
+  transform: translate(-50%, -50%);
+  border-color: var(--line);
+  background: rgba(13, 18, 14, 0.92);
+  box-shadow: 2px 2px 0 #050805;
+}
+
+.continent-marker.unlocked {
+  border-color: var(--accent);
+}
+
+.continent-marker.locked {
+  color: var(--muted);
+  border-color: #374038;
+  background: rgba(8, 11, 9, 0.78);
+}
+
+.continent-marker.focused {
+  border-color: var(--ok);
+  box-shadow: 0 0 0 1px var(--ok), 2px 2px 0 #050805;
+}
+
+.continent-marker.selected {
+  outline: 1px solid var(--warn);
+  outline-offset: 2px;
+}
+
+.continent-context-menu {
+  position: absolute;
+  z-index: 6;
+  display: grid;
+  gap: 3px;
+  min-width: 84px;
+  padding: 4px;
+  border: 1px solid var(--accent);
+  background: #0c110d;
+  box-shadow: 2px 2px 0 #050805;
+}
+
+.continent-context-menu button {
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .population-main {
@@ -716,10 +805,23 @@ pre {
 
 .temple-matrix {
   position: relative;
-  min-height: 430px;
-  margin-bottom: 8px;
+  width: min(100%, calc((100vh - 278px) * 1.5));
+  aspect-ratio: 3 / 2;
+  min-height: 0;
+  max-height: calc(100vh - 278px);
+  margin: 0 auto 6px;
   border: 1px solid var(--line);
   overflow: hidden;
+  background: #121b26;
+}
+
+.temple-board-surface {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.temple-board-grid {
   background:
     linear-gradient(90deg, rgba(112, 166, 217, 0.04) 1px, transparent 1px),
     linear-gradient(0deg, rgba(112, 166, 217, 0.035) 1px, transparent 1px),
@@ -727,15 +829,49 @@ pre {
   background-size: 18px 18px;
 }
 
+.temple-board-surface.altar-triangle {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: url("assets/altar-triangle.png") center / 100% 100% no-repeat;
+}
+
+.temple-board-surface.altar-triangle .temple-socket {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.temple-board-surface.altar-triangle .temple-socket.connected {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.temple-board-surface.altar-triangle .temple-socket.drop-target {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.temple-board-surface.altar-triangle .temple-socket-title,
+.temple-board-surface.altar-triangle .temple-socket .detail-line,
+.temple-board-surface.altar-triangle .empty-socket {
+  display: none;
+}
+
+.temple-board-surface.altar-triangle .temple-socket-pad {
+  min-height: 100%;
+  border-color: transparent;
+  background: transparent;
+}
+
 .temple-socket {
   position: absolute;
   z-index: 2;
-  width: 142px;
-  min-height: 132px;
+  width: clamp(82px, 15.2%, 132px);
+  min-height: clamp(76px, 16%, 116px);
   transform: translate(-50%, -50%);
   border: 2px solid var(--line);
-  background: var(--socket-color, rgba(13, 18, 14, 0.92));
-  padding: 7px;
+  background: color-mix(in srgb, var(--socket-color, rgba(13, 18, 14, 0.92)) 76%, rgba(5, 8, 7, 0.72));
+  padding: 5px;
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.42);
 }
 
@@ -750,13 +886,16 @@ pre {
 }
 
 .temple-socket-title {
-  margin-bottom: 7px;
+  margin-bottom: 4px;
   color: #081008;
+  font-size: 10px;
   text-transform: uppercase;
   text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .temple-socket .detail-line {
+  font-size: 9px;
+  line-height: 11px;
   color: rgba(5, 10, 6, 0.82);
 }
 
@@ -772,7 +911,7 @@ pre {
 .temple-socket-pad {
   display: grid;
   place-items: center;
-  min-height: 66px;
+  min-height: clamp(44px, 8vw, 58px);
   border: 1px solid rgba(6, 10, 8, 0.65);
   background: rgba(5, 8, 7, 0.78);
 }
@@ -788,6 +927,8 @@ pre {
   left: 8px;
   top: 8px;
   color: #70d7dd;
+  font-size: 10px;
+  line-height: 12px;
   text-transform: uppercase;
 }
 
@@ -829,12 +970,12 @@ pre {
 
 .shard-grid {
   display: grid;
-  grid-template-columns: repeat(10, 70px);
-  grid-template-rows: repeat(2, 84px);
+  grid-template-columns: repeat(10, 58px);
+  grid-template-rows: repeat(2, 68px);
   gap: 3px;
   border: 1px solid var(--line);
   background: #0d1318;
-  padding: 3px;
+  padding: 2px;
   overflow-x: auto;
 }
 
@@ -847,10 +988,10 @@ pre {
   display: grid;
   grid-template-rows: 1fr auto auto;
   gap: 2px;
-  min-height: 82px;
+  min-height: 66px;
   border: 1px solid #95a2a8;
   background: #4b4d4d;
-  padding: 3px;
+  padding: 2px;
 }
 
 .shard-inventory-cell.selected {
@@ -880,8 +1021,8 @@ pre {
   place-items: center;
   align-self: center;
   justify-self: center;
-  width: 58px;
-  height: 58px;
+  width: 48px;
+  height: 48px;
   padding: 0;
   border: 1px solid #d7f2d7;
   background: #050705;
@@ -890,8 +1031,8 @@ pre {
 }
 
 .shard-token.equipped {
-  width: 62px;
-  height: 62px;
+  width: 46px;
+  height: 46px;
 }
 
 .shard-token.selected {
@@ -912,13 +1053,13 @@ pre {
 .shard-glyph {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border: 2px solid currentColor;
   background:
     radial-gradient(circle at 50% 50%, rgba(168, 211, 123, 0.26), transparent 58%),
     #071007;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -1146,12 +1287,9 @@ pre {
   width: var(--map-world-width, 1024px);
   height: var(--map-world-height, 1024px);
   transform-origin: 0 0;
-  background:
-    linear-gradient(90deg, rgba(168, 211, 123, 0.05) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(168, 211, 123, 0.04) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(8, 10, 8, 0.08), rgba(8, 10, 8, 0.24)),
-    var(--map-bg-image, url("assets/map-bg.png")) 0 0 / var(--map-world-width, 1024px) var(--map-world-height, 1024px) no-repeat;
-  background-size: 32px 32px, 32px 32px, auto, var(--map-world-width, 1024px) var(--map-world-height, 1024px);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: var(--map-bg-image, url("assets/map-bg.png")) 0 0 / var(--map-world-width, 1024px) var(--map-world-height, 1024px) no-repeat;
 }
 
 .map-context-menu {
@@ -1504,10 +1642,6 @@ pre {
   border: 1px solid #0b0f0c;
   background: var(--warn);
   box-shadow: 0 0 0 1px var(--line-hot);
-}
-
-.map-actor.worker {
-  background: var(--ok);
 }
 
 .map-actor.party {
@@ -2076,6 +2210,8 @@ label {
   .map-layout,
   .map-tab-layout,
   .population-layout,
+  .expedition-layout,
+  .continent-layout,
   .tavern-layout,
   .roster-layout,
   .roster-main-grid,
@@ -2085,6 +2221,8 @@ label {
 
   .map-side-panel,
   .tavern-detail-panel,
+  .expedition-side-panel,
+  .continent-side-panel,
   .roster-detail-panel,
   .temple-side-panel {
     position: static;

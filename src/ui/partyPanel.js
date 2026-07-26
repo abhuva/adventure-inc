@@ -9,6 +9,7 @@ export function renderPartyPanel({
   documentRef,
   el,
   state,
+  parties = state.parties,
   atlas,
   blueprints,
   focusedHero,
@@ -31,7 +32,7 @@ export function renderPartyPanel({
   onLearnSkill
 }) {
   el.partyRows.innerHTML = partyRowsHtml({
-    parties: state.parties,
+    parties,
     selectedPartyId: state.selectedPartyId,
     operations: state.operations,
     partyStats,
@@ -57,6 +58,10 @@ export function renderPartyPanel({
   };
 
   const hero = focusedHero();
+  if (!hero) {
+    el.focusedCharacterBox.innerHTML = `<div class="empty-state">no local adventurer selected</div>`;
+    return;
+  }
   const stats = heroStats(hero);
   const status = characterState(hero.id);
   const treeIds = availableSkillTreeIds(hero).slice(0, 2);
