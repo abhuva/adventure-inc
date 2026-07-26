@@ -42,6 +42,8 @@ export function mapTransformStyle(mapView) {
   return `translate(${mapView.panX}px, ${mapView.panY}px) scale(${mapView.zoom})`;
 }
 
-export function mapStatusText({ operationCount, zoom, worldSize }) {
-  return `${operationCount} party op${operationCount === 1 ? "" : "s"} / zoom ${zoom.toFixed(2)}x / world ${worldSize}x${worldSize}`;
+export function mapStatusText({ operationCount, zoom, worldSize, worldWidth, worldHeight }) {
+  const width = worldWidth ?? worldSize;
+  const height = worldHeight ?? worldSize ?? width;
+  return `${operationCount} party op${operationCount === 1 ? "" : "s"} / zoom ${zoom.toFixed(2)}x / world ${width}x${height}`;
 }

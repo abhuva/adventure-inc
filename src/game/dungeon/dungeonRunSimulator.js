@@ -5,9 +5,17 @@ import {
   resolveNode
 } from "../combat/combatTimeline.js";
 import { pushReplayEvent } from "../combat/combatReplayModel.js";
+import {
+  dungeonNodesForRoute,
+  dungeonRouteForStop,
+  effectiveDungeonNode,
+  isUniqueBossNode,
+  nodeResolveCost
+} from "./dungeonGraphModel.js";
 
-export function simulateDungeonRun({ dungeon, strategy, stopNode, party, stats, members, availableFood }) {
-  const targetLastIndex = stopNode === "all" ? dungeon.nodes.length - 1 : Number(stopNode);
+export function simulateDungeonRun({ dungeon, strategy, stopNode, party, stats, members, availableFood, defeatedBosses = {}, conquestState = {} }) {
+  const route = dungeonRouteForStop(dungeon, stopNode, conquestState);
+  const routeNodes = dungeonNodesForRoute(dungeon, route);
   const partyActors = createPartyCombatActors(members);
   const timeline = [];
   const travelHours = adjustedTravelHours(dungeon.travelHours, stats);
@@ -18,8 +26,11 @@ export function simulateDungeonRun({ dungeon, strategy, stopNode, party, stats, 
     partyName: party.name,
     memberIds: [...party.memberIds],
     strategy,
-    targetLastIndex,
-    totalNodes: targetLastIndex + 1,
+    routeId: route.id,
+    routeName: route.name,
+    routeNodeIds: routeNodes.map((node) => node.id),
+    targetLastIndex: routeNodes.length - 1,
+    totalNodes: routeNodes.length,
     reached: 0,
     success: false,
     hours: travelHours * 2,
@@ -30,6 +41,10 @@ export function simulateDungeonRun({ dungeon, strategy, stopNode, party, stats, 
     hpMax: stats.hpMax,
     hpStart: stats.hpCurrent,
     hpEnd: stats.hpCurrent,
+    resolveStart: partyActors.reduce((sum, actor) => sum + actor.resolveLeft, 0),
+    resolveEnd: partyActors.reduce((sum, actor) => sum + actor.resolveLeft, 0),
+    activeMemberIds: partyActors.map((actor) => actor.id),
+    withdrawnMemberIds: [],
     rewards: {},
     transcript: [],
     timeline
@@ -62,15 +77,27 @@ export function simulateDungeonRun({ dungeon, strategy, stopNode, party, stats, 
   pushReplayEvent(timeline, {
     type: "start",
     icon: ">>",
-    text: `${party.name} enters ${dungeon.name}.`,
+    text: `${party.name} enters ${dungeon.name}: ${route.name}.`,
     partyActors,
     enemyActors: []
   });
 
-  for (let index = 0; index <= targetLastIndex; index += 1) {
-    const node = dungeon.nodes[index];
+  for (let index = 0; index < routeNodes.length; index += 1) {
+    const baseNode = routeNodes[index];
+    const node = effectiveDungeonNode(dungeon, baseNode, conquestState);
+    const activeActors = prepareResolveForNode(partyActors, nodeResolveCost(node), node.name, result.transcript, timeline);
+    result.resolveEnd = partyActors.reduce((sum, actor) => sum + Math.max(0, actor.resolveLeft), 0);
+    result.activeMemberIds = activePartyActors(partyActors).map((actor) => actor.id);
+    result.withdrawnMemberIds = partyActors.filter((actor) => actor.withdrew).map((actor) => actor.id);
+    if (!activeActors.length) {
+      result.transcript.push("run stops: no adventurer has enough resolve to continue");
+      break;
+    }
     const before = partyHpCurrent(partyActors);
-    const nodeResult = resolveNode(node, stats, partyActors, strategy, timeline);
+    const alreadyDefeated = isClearedOneTimeNode(dungeon.id, node, defeatedBosses, conquestState);
+    const nodeResult = alreadyDefeated
+      ? { success: true, hp: partyHpCurrent(activeActors), hours: 1, summary: "unique threat already cleared" }
+      : resolveNode(node, stats, activeActors, strategy, timeline);
     result.hpEnd = partyHpCurrent(partyActors);
     result.hours += nodeResult.hours;
     result.dungeonHours += nodeResult.hours;
@@ -82,7 +109,14 @@ export function simulateDungeonRun({ dungeon, strategy, stopNode, party, stats, 
     }
 
     result.reached += 1;
-    mergeRewards(result.rewards, node.reward);
+    if (!alreadyDefeated || node.repeatRewards) mergeRewards(result.rewards, node.reward);
+    if (node.activeModifiers?.length) {
+      result.transcript.push(`${node.name}: active modifiers ${node.activeModifiers.map((modifier) => modifier.name || modifier.id).join(", ")}`);
+    }
+    markSpentActorsWithdrawn(partyActors, node.name, result.transcript, timeline);
+    result.resolveEnd = partyActors.reduce((sum, actor) => sum + Math.max(0, actor.resolveLeft), 0);
+    result.activeMemberIds = activePartyActors(partyActors).map((actor) => actor.id);
+    result.withdrawnMemberIds = partyActors.filter((actor) => actor.withdrew).map((actor) => actor.id);
   }
 
   result.success = result.reached === result.totalNodes && result.hpEnd > 0;
@@ -98,6 +132,10 @@ export function simulateDungeonRun({ dungeon, strategy, stopNode, party, stats, 
   });
   result.hours += finalRecoveryHours;
   return result;
+}
+
+export function uniqueBossKey(dungeonId, nodeId) {
+  return `${dungeonId}:${nodeId}`;
 }
 
 export function adjustedTravelHours(baseHours, stats) {
@@ -117,4 +155,62 @@ export function mergeRewards(target, rewards = {}) {
     target[key] = (target[key] || 0) + value;
   });
   return target;
+}
+
+function isClearedOneTimeNode(dungeonId, node, defeatedBosses, conquestState) {
+  if (conquestState.clearedNodes?.[node.id] && (node.oneTime || isUniqueBossNode(node))) return true;
+  return isUniqueBossNode(node) && defeatedBosses[uniqueBossKey(dungeonId, node.id)];
+}
+
+function activePartyActors(partyActors) {
+  return partyActors.filter((actor) => actor.hp > 0 && !actor.withdrew);
+}
+
+function prepareResolveForNode(partyActors, cost, nodeName, transcript, timeline) {
+  if (cost <= 0) return activePartyActors(partyActors);
+  const cannotContinue = [];
+  const entering = [];
+  partyActors.forEach((actor) => {
+    if (actor.hp <= 0 || actor.withdrew) return;
+    if (actor.resolveLeft < cost) {
+      actor.withdrew = true;
+      cannotContinue.push(actor.name);
+      return;
+    }
+    actor.resolveLeft = Math.max(0, actor.resolveLeft - cost);
+    entering.push(actor);
+  });
+  const detail = cannotContinue.length
+    ? `${nodeName}: requires ${cost} resolve; withdrew before node: ${cannotContinue.join(", ")}`
+    : `${nodeName}: resolve -${cost}`;
+  transcript.push(detail);
+  pushReplayEvent(timeline, {
+    type: "resolve",
+    icon: "RSV",
+    text: detail,
+    partyActors,
+    enemyActors: []
+  });
+  return entering;
+}
+
+function markSpentActorsWithdrawn(partyActors, nodeName, transcript, timeline) {
+  const withdrawn = [];
+  partyActors.forEach((actor) => {
+    if (actor.hp <= 0 || actor.withdrew) return;
+    if (actor.resolveLeft <= 0) {
+      actor.withdrew = true;
+      withdrawn.push(actor.name);
+    }
+  });
+  if (!withdrawn.length) return;
+  const detail = `${nodeName}: resolve spent; withdrew after node: ${withdrawn.join(", ")}`;
+  transcript.push(detail);
+  pushReplayEvent(timeline, {
+    type: "resolve",
+    icon: "RSV",
+    text: detail,
+    partyActors,
+    enemyActors: []
+  });
 }

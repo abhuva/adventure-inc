@@ -13,7 +13,7 @@ test("setupAppMapInteractions maps app state and config to map interaction bindi
   setupAppMapInteractions({
     el: { overlandMap },
     state: { mapView },
-    mapViewConfig: { minZoom: 0.4, maxZoom: 3.5, worldSize: 1024 },
+    mapViewConfig: { minZoom: 0.4, maxZoom: 3.5 },
     applyMapTransform,
     renderLocationDetail,
     setupMapInteractions: (args) => {
@@ -22,7 +22,7 @@ test("setupAppMapInteractions maps app state and config to map interaction bindi
   });
 
   assert.equal(received.mapElement, overlandMap);
-  assert.equal(received.mapView, mapView);
+  assert.equal(received.mapView(), mapView);
   assert.equal(received.minZoom, 0.4);
   assert.equal(received.maxZoom, 3.5);
   assert.equal(received.applyMapTransform, applyMapTransform);

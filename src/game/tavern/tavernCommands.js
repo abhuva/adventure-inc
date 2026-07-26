@@ -1,3 +1,5 @@
+import { assignWorkerToJob } from "../settlement/workforceModel.js";
+
 export function tavernUpgradeCost(state, blueprints) {
   return state.blueprints.bunkRoom ? blueprints.bunkRoom.cost : { wood: 10, ore: 4 };
 }
@@ -14,11 +16,5 @@ export function upgradeTavern(state, blueprints, { canPay, pay } = {}) {
 }
 
 export function assignWorker(state, job) {
-  const other = job === "wood" ? "ore" : "wood";
-  if ((state.tavern.jobs[other] || 0) <= 0) {
-    return { ok: false, reason: "no worker", job, other };
-  }
-  state.tavern.jobs[other] -= 1;
-  state.tavern.jobs[job] = (state.tavern.jobs[job] || 0) + 1;
-  return { ok: true, job, other };
+  return assignWorkerToJob(state, job);
 }

@@ -10,14 +10,13 @@
     <div class="app-shell">
       <header class="topbar">
         <div>
-          <div class="app-title">adventure-inc // deterministic tavern ops</div>
-          <div class="app-subtitle">idle / incremental / roguelike management prototype</div>
+          <div class="app-title">Adventure-Inc</div>
         </div>
         <div class="clockline">
           <span id="dayLabel">day 1</span>
           <span id="phaseLabel">phase 00:00</span>
           <span id="runStateLabel">manual</span>
-          <span id="tavernResourceLine">coin 0 / food 0 / wood 0 / ore 0 / hide 0 / fame 0</span>
+          <span id="tavernResourceLine">coin 0 / fame 0</span>
         </div>
       </header>
 
@@ -35,25 +34,17 @@
         <section class="tab-panel active" data-tab-panel="map">
           <div class="map-tab-layout">
             <div class="panel map-panel">
-              <div class="panel-head">
-                <h2>Overland Operations Map</h2>
-                <span id="mapStatus">coordinate view</span>
-              </div>
-              <div class="time-controls">
-                <button id="advanceHourBtn">+1 hour</button>
-                <button id="advanceDayBtn">+1 day</button>
-                <button id="autoTimeBtn">auto time: off</button>
+              <div class="map-toolbar">
+                <label>Selected Party <select id="mapPartySelect"></select></label>
               </div>
               <div id="overlandMap" class="overland-map"></div>
             </div>
             <aside class="panel map-side-panel">
-              <div class="panel-head">
-                <h2>Location</h2>
-                <span>selected POI</span>
-              </div>
               <div class="local-tabs">
                 <button class="local-tab-button active" data-map-side-tab="info">info</button>
                 <button class="local-tab-button" data-map-side-tab="operations">operations</button>
+                <button class="local-tab-button" data-map-side-tab="log">log</button>
+                <button class="local-tab-button" data-map-side-tab="dev">dev</button>
               </div>
               <div class="local-tab-panel active" data-map-side-panel="info">
                 <h3>Selected Location</h3>
@@ -75,61 +66,120 @@
                   <tbody id="poiRows"></tbody>
                 </table>
               </div>
+              <div class="local-tab-panel map-log-panel" data-map-side-panel="log">
+                <div class="panel-head">
+                  <h3>Deterministic Log</h3>
+                  <button id="clearLogBtn">clear</button>
+                </div>
+                <ol id="logRows" class="log"></ol>
+              </div>
+              <div class="local-tab-panel" data-map-side-panel="dev">
+                <h3>Dev Time</h3>
+                <div class="row-actions">
+                  <button id="advanceDayBtn">+1 day</button>
+                  <button id="autoTimeBtn">auto time: off</button>
+                </div>
+              </div>
             </aside>
           </div>
-          <section class="panel panel-log">
-            <div class="panel-head">
-              <h2>Deterministic Log</h2>
-              <button id="clearLogBtn">clear</button>
-            </div>
-            <ol id="logRows" class="log"></ol>
-          </section>
         </section>
 
         <section class="tab-panel tavern-view" data-tab-panel="tavern">
-          <div class="panel panel-tavern">
-          <div class="panel-head">
-            <h2>Tavern</h2>
-            <span>visitor queue</span>
-          </div>
-          <div class="row-actions">
-            <button id="advanceTavernDayBtn">advance day</button>
-            <button id="upgradeTavernBtn">upgrade tavern</button>
-          </div>
-          <h3>Visitor Queue</h3>
-          <div id="visitorRows" class="visitor-grid"></div>
+          <div class="tavern-layout">
+            <div class="panel panel-tavern tavern-main-panel">
+              <div class="panel-head">
+                <h2>Tavern</h2>
+                <span>visitor queue</span>
+              </div>
+              <div class="row-actions">
+                <button id="upgradeTavernBtn">upgrade tavern</button>
+              </div>
+              <h3>Visitor Queue</h3>
+              <div id="visitorRows" class="visitor-grid"></div>
+            </div>
+            <aside class="panel tavern-detail-panel">
+              <div class="local-tabs tavern-detail-tabs">
+                <button class="local-tab-button active" data-tavern-detail-tab="info">info</button>
+                <button class="local-tab-button" data-tavern-detail-tab="skill1">skill 1</button>
+                <button class="local-tab-button" data-tavern-detail-tab="skill2">skill 2</button>
+              </div>
+              <div id="tavernVisitorDetailBox" class="character-detail">select a visitor</div>
+            </aside>
           </div>
         </section>
 
         <section class="tab-panel tavern-view" data-tab-panel="population">
-          <div class="panel panel-tavern">
-          <div class="panel-head">
-            <h2>Population</h2>
-            <span id="tavernStatus">capacity 3 / fame 0</span>
-          </div>
-          <div class="row-actions">
-            <button id="assignWoodBtn">assign worker: wood</button>
-            <button id="assignOreBtn">assign worker: ore</button>
-          </div>
-          <div class="split">
-            <div>
-              <h3>Population Jobs</h3>
-              <table>
-                <thead>
-                  <tr><th>Job</th><th>Workers</th><th>Output / cycle</th></tr>
-                </thead>
-                <tbody id="jobRows"></tbody>
-              </table>
-            </div>
-            <div>
-              <h3>Settlement Labor Notes</h3>
-              <div class="location-detail">
-                <div class="detail-line">Population workers are separate from adventurer parties.</div>
-                <div class="detail-line">Wood and ore workers travel visibly on the map and deliver on deterministic cycles.</div>
-                <div class="detail-line">Kitchen and coin income are daily tavern base income.</div>
+          <div class="population-layout">
+            <div class="population-main">
+              <div class="local-tabs population-local-tabs">
+                <button class="local-tab-button active" data-population-local-tab="population">population</button>
+                <button class="local-tab-button" data-population-local-tab="workshop">workshop</button>
+                <button class="local-tab-button" data-population-local-tab="upgrades">upgrades</button>
+              </div>
+              <div class="local-tab-panel active" data-population-local-panel="population">
+                <div class="panel panel-tavern">
+                  <div class="panel-head">
+                    <h2>Population</h2>
+                    <span id="tavernStatus">capacity 3 / fame 0</span>
+                  </div>
+                  <div class="row-actions">
+                    <button id="buildHousesBtn">hire worker</button>
+                  </div>
+                  <div class="split">
+                    <div>
+                      <h3>Population Jobs</h3>
+                      <table>
+                        <thead>
+                          <tr><th>Job</th><th>Workers</th><th>Output / cycle</th><th>Assign</th></tr>
+                        </thead>
+                        <tbody id="jobRows"></tbody>
+                      </table>
+                    </div>
+                    <div>
+                      <h3>Settlement Labor Notes</h3>
+                      <div class="location-detail">
+                        <div class="detail-line">Population workers are separate from adventurer parties.</div>
+                        <div class="detail-line">Wood and ore workers travel visibly on the map and deliver on deterministic cycles.</div>
+                        <div class="detail-line">Hire workers directly with coin. Each worker costs 1 coin per day in upkeep.</div>
+                        <div class="detail-line">Unpaid upkeep halves all worker production until the next paid upkeep.</div>
+                        <div id="settlementWageControls" class="wage-controls"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="local-tab-panel" data-population-local-panel="workshop">
+                <div class="panel panel-tavern">
+                  <div class="panel-head">
+                    <h2>Production Workshop</h2>
+                    <span id="workshopStatus">idle</span>
+                  </div>
+                  <div id="workshopSlots" class="workshop-slots"></div>
+                </div>
+              </div>
+              <div class="local-tab-panel" data-population-local-panel="upgrades">
+                <div class="panel panel-tavern">
+                  <div class="panel-head">
+                    <h2>Workshop Upgrades</h2>
+                    <span>research and tooling</span>
+                  </div>
+                  <div id="workshopResearch" class="location-detail"></div>
+                  <div id="workshopUpgradeGraph"></div>
+                </div>
               </div>
             </div>
-          </div>
+            <aside class="panel population-resource-panel">
+              <div class="panel-head">
+                <h2>Gathered Resources</h2>
+                <span>stores</span>
+              </div>
+              <table>
+                <thead>
+                  <tr><th>Resource</th><th>Have</th></tr>
+                </thead>
+                <tbody id="populationResourceRows"></tbody>
+              </table>
+            </aside>
           </div>
         </section>
 
@@ -161,13 +211,10 @@
               </div>
             </div>
             <aside class="panel roster-detail-panel">
-              <div class="panel-head">
-                <h2>Selected Character</h2>
-                <span>focus</span>
-              </div>
-              <div class="row-actions">
-                <button id="craftBladeBtn">craft iron blade</button>
-                <button id="craftWardBtn">craft ward charm</button>
+              <div class="local-tabs roster-detail-tabs">
+                <button class="local-tab-button active" data-roster-detail-tab="info">info</button>
+                <button class="local-tab-button" data-roster-detail-tab="skill1">skill 1</button>
+                <button class="local-tab-button" data-roster-detail-tab="skill2">skill 2</button>
               </div>
               <div id="focusedCharacterBox" class="character-detail">select a character for training and crafting</div>
             </aside>
@@ -175,85 +222,93 @@
         </section>
 
         <section class="tab-panel dungeon-view" data-tab-panel="dungeon">
-          <div class="panel panel-plan">
-          <div class="panel-head">
-            <h2>Dungeon Planner</h2>
-            <span id="dungeonStatus">fixed script combat</span>
+          <div class="local-tabs dungeon-local-tabs">
+            <button class="local-tab-button active" data-dungeon-local-tab="dungeon">dungeon</button>
+            <button class="local-tab-button" data-dungeon-local-tab="info">info</button>
           </div>
-          <div class="form-grid">
-            <label>
-              Party
-              <select id="partySelect"></select>
-            </label>
-            <label>
-              Dungeon
-              <select id="dungeonSelect"></select>
-            </label>
-            <label>
-              Strategy
-              <select id="strategySelect">
-                <option value="balanced">balanced: attack, heal under 40%</option>
-                <option value="burst">burst: spam strongest skill</option>
-                <option value="guarded">guarded: defend before enemy heavy skills</option>
-              </select>
-            </label>
-            <label>
-              Stop after node
-              <select id="stopNodeSelect"></select>
-            </label>
-            <label>
-              Repeat plan
-              <select id="repeatSelect">
-                <option value="0">manual only</option>
-                <option value="repeat">repeated</option>
-              </select>
-            </label>
-          </div>
-          <div class="row-actions">
-            <button id="simulateBtn">simulate run</button>
-            <button id="commitBtn">commit deterministic result</button>
-            <button id="autoBtn">run automation</button>
-          </div>
-          <div class="split">
-            <div>
-              <h3>Route Nodes</h3>
-              <div id="nodeMap" class="node-map"></div>
-            </div>
-            <div>
-              <h3>Run Estimate</h3>
-              <pre id="estimateBox">select a dungeon and simulate</pre>
+          <div class="local-tab-panel active" data-dungeon-local-panel="dungeon">
+            <div class="dungeon-workspace-layout">
+              <div class="dungeon-main-split">
+                <div class="panel dungeon-graph-panel">
+                  <div id="nodeMap" class="node-map"></div>
+                </div>
+                <div class="panel dungeon-replay-panel">
+                  <div class="panel-head">
+                    <h2>Combat Replay</h2>
+                    <span id="replayStatus">no replay</span>
+                  </div>
+                  <div class="row-actions">
+                    <button id="replayFirstBtn">first</button>
+                    <button id="replayPrevBtn">prev</button>
+                    <button id="replayPlayBtn">play</button>
+                    <button id="replayNextBtn">next</button>
+                    <button id="replayLastBtn">last</button>
+                    <button id="replaySpeedBtn">speed 1x</button>
+                  </div>
+                  <input id="replayTimelineSlider" class="replay-timeline-slider" type="range" min="0" max="0" value="0" step="1">
+                  <div class="replay-stage">
+                    <div>
+                      <h3>Party</h3>
+                      <div id="replayPartyActors" class="replay-actors"></div>
+                    </div>
+                    <div class="replay-event-center">
+                      <div id="replayActionIcon" class="replay-action-icon">--</div>
+                      <div id="replayEventText" class="replay-event-text">simulate a run to inspect combat events</div>
+                    </div>
+                    <div>
+                      <h3>Enemy</h3>
+                      <div id="replayEnemyActors" class="replay-actors"></div>
+                    </div>
+                  </div>
+                  <ol id="replayEventRows" class="replay-log"></ol>
+                </div>
+              </div>
+              <aside class="panel dungeon-node-side-panel">
+                <div id="dungeonNodeInfo" class="dungeon-node-info">select a route node</div>
+              </aside>
             </div>
           </div>
-          <div class="dungeon-replay-panel">
-            <div class="panel-head">
-              <h2>Combat Replay</h2>
-              <span id="replayStatus">no replay</span>
-            </div>
-            <div class="row-actions">
-              <button id="replayFirstBtn">first</button>
-              <button id="replayPrevBtn">prev</button>
-              <button id="replayPlayBtn">play</button>
-              <button id="replayNextBtn">next</button>
-              <button id="replayLastBtn">last</button>
-              <button id="replaySpeedBtn">speed 1x</button>
-            </div>
-            <input id="replayTimelineSlider" class="replay-timeline-slider" type="range" min="0" max="0" value="0" step="1">
-            <div class="replay-stage">
+          <div class="local-tab-panel" data-dungeon-local-panel="info">
+            <div class="panel panel-plan dungeon-main-panel">
+              <div class="form-grid dungeon-info-controls">
+                <label>
+                  Party
+                  <select id="partySelect"></select>
+                </label>
+                <label>
+                  Dungeon
+                  <select id="dungeonSelect"></select>
+                </label>
+                <label>
+                  Strategy
+                  <select id="strategySelect">
+                    <option value="balanced">balanced: attack, heal under 40%</option>
+                    <option value="burst">burst: spam strongest skill</option>
+                    <option value="guarded">guarded: defend before enemy heavy skills</option>
+                  </select>
+                </label>
+                <label>
+                  Target node
+                  <select id="stopNodeSelect"></select>
+                </label>
+                <label>
+                  Repeat plan
+                  <select id="repeatSelect">
+                    <option value="0">manual only</option>
+                    <option value="repeat">repeated</option>
+                  </select>
+                </label>
+              </div>
+              <div class="row-actions">
+                <button id="simulateBtn">simulate run</button>
+                <button id="commitBtn">commit deterministic result</button>
+                <button id="autoBtn">run automation</button>
+              </div>
               <div>
-                <h3>Party</h3>
-                <div id="replayPartyActors" class="replay-actors"></div>
-              </div>
-              <div class="replay-event-center">
-                <div id="replayActionIcon" class="replay-action-icon">--</div>
-                <div id="replayEventText" class="replay-event-text">simulate a run to inspect combat events</div>
-              </div>
-              <div>
-                <h3>Enemy</h3>
-                <div id="replayEnemyActors" class="replay-actors"></div>
+                <h3>Run Estimate</h3>
+                <div id="estimateBox" class="estimate-box">select a dungeon and simulate</div>
               </div>
             </div>
-            <ol id="replayEventRows" class="replay-log"></ol>
-          </div>
           </div>
         </section>
 
@@ -292,6 +347,10 @@
           </div>
           <div id="blueprintRows" class="blueprints"></div>
           <h3>System Notes</h3>
+          <div class="row-actions">
+            <button id="saveNowBtn">save now</button>
+            <button id="resetSaveBtn">reset local save</button>
+          </div>
           <ul class="notes">
             <li>Dungeon outcomes are deterministic for a party, route, and strategy.</li>
             <li>Automation applies the solved run result as a scheduled state delta.</li>
@@ -302,6 +361,7 @@
         </section>
       </main>
     </div>
+    <div id="encounterOverlay" class="encounter-overlay hidden" aria-live="polite"></div>
 
     <script type="module" src="src/main.js"></script>
   </body>

@@ -53,11 +53,12 @@ export function partyStats(state, party = selectedParty(state), bonuses = {}) {
     partyTotals.atk += heroStat.atk;
     partyTotals.def += heroStat.def;
     partyTotals.utility += heroStat.utility;
+    partyTotals.resolve += heroStat.resolve;
     partyTotals.travelSpeed += heroStat.travelSpeed;
     partyTotals.recoveryReduce += heroStat.recoveryReduce;
     partyTotals.foodCostReduce += heroStat.foodCostReduce;
     return partyTotals;
-  }, { hpMax: 0, hpCurrent: 0, atk: 0, def: 0, utility: 0, travelSpeed: 0, recoveryReduce: 0, foodCostReduce: 0 });
+  }, { hpMax: 0, hpCurrent: 0, atk: 0, def: 0, utility: 0, resolve: 0, travelSpeed: 0, recoveryReduce: 0, foodCostReduce: 0 });
 
   stats.atk += bonuses.party_atk || 0;
   stats.def += bonuses.party_def || 0;

@@ -1,12 +1,20 @@
+import { normalizeAppState } from "./stateNormalizer.js";
+
 export const SAVEGAME_SCHEMA_VERSION = 1;
 
 const SERIALIZABLE_TOP_LEVEL_KEYS = [
   "day",
   "hour",
+  "events",
+  "progression",
   "tavern",
+  "tavernVisitors",
+  "settlement",
   "resources",
   "roster",
   "focusedHeroId",
+  "selectedTavernVisitorId",
+  "activeTavernDetailTab",
   "selectedPartyId",
   "rosterView",
   "parties",
@@ -20,6 +28,7 @@ const SERIALIZABLE_TOP_LEVEL_KEYS = [
   "mapView",
   "operations",
   "workerProgress",
+  "workshop",
   "visual",
   "log"
 ];
@@ -57,7 +66,7 @@ export function restoreSavePayload(payload, currentState) {
       currentState[key] = cloneSerializableValue(normalized.state[key]);
     }
   }
-  return currentState;
+  return normalizeAppState(currentState);
 }
 
 export function normalizeSavePayload(payload) {

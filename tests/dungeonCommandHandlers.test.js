@@ -16,6 +16,15 @@ const dungeon = {
   ]
 };
 
+const mine = {
+  id: "mine",
+  name: "Old Copper Mine",
+  coord: { x: 20, y: 20 },
+  travelHours: 2,
+  foodCost: 2,
+  nodes: []
+};
+
 function sampleEstimate(overrides = {}) {
   return {
     success: true,
@@ -57,7 +66,7 @@ function createHarness(overrides = {}) {
     isPartyFullyHealed: () => overrides.fullyHealed ?? true,
     partyAssignmentReadiness: () => overrides.readiness || { canQueue: true, message: "ready in town" },
     currentOperationPhase: (operation) => currentOperationPhase(operation, { queuedCoord: { x: 0, y: 0 } }),
-    dungeons: () => [dungeon],
+    dungeons: () => overrides.dungeons || [dungeon, mine],
     tavernCoord: () => ({ x: 0, y: 0 }),
     applyRewards: (rewards) => {
       Object.entries(rewards).forEach(([key, value]) => {
@@ -72,6 +81,7 @@ function createHarness(overrides = {}) {
     recordShardProgress: () => calls.push("recordShardProgress"),
     formatReward: (reward = {}) => Object.entries(reward).map(([key, value]) => `${key}+${value}`).join(" ") || "none",
     replayTimerApi: () => ({ clearIntervalFn: () => calls.push("clearReplay") }),
+    populateDungeonSelect: () => calls.push("populateDungeonSelect"),
     addLog: (text, type) => logs.push({ text, type }),
     render: () => calls.push("render")
   });
@@ -128,4 +138,17 @@ test("dungeon handlers complete operations through injected progression callback
   assert.equal(calls.includes("recordShardProgress"), true);
   assert.match(logs.at(-2).text, /temple resonance/);
   assert.match(logs.at(-1).text, /returned/);
+});
+
+test("dungeon handlers refresh dungeon options when a clear unlocks a dungeon", () => {
+  const { state, calls, handlers } = createHarness();
+  state.progression.dungeonClears.cellar = 49;
+  const estimate = sampleEstimate();
+  handlers.scheduleEstimate(estimate, false);
+  const operation = state.operations[0];
+
+  handlers.completeEstimate(operation);
+
+  assert.equal(state.progression.unlockedLocations.mine, true);
+  assert.equal(calls.includes("populateDungeonSelect"), true);
 });

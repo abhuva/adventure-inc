@@ -1,9 +1,9 @@
 import {
-  dungeonsFromPoi,
-  mapLocationsFromPoi,
-  selectedLocationFromPoi,
   tavernCoordFromPoi,
-  workSitesFromPoi
+  visibleDungeonsFromPoi,
+  visibleMapLocationsFromPoi,
+  visibleSelectedLocationFromPoi,
+  visibleWorkSitesFromPoi
 } from "../data/poiSelectors.js";
 import {
   characterState,
@@ -28,7 +28,7 @@ export function createAppQueries({
   templeQueries
 }) {
   function dungeons() {
-    return dungeonsFromPoi(getPoiData());
+    return visibleDungeonsFromPoi(getPoiData(), state);
   }
 
   function tavernCoord() {
@@ -56,7 +56,7 @@ export function createAppQueries({
     },
     dungeons,
     workSites() {
-      return workSitesFromPoi(getPoiData());
+      return visibleWorkSitesFromPoi(getPoiData(), state);
     },
     tavernCoord,
     focusedHero() {
@@ -79,10 +79,10 @@ export function createAppQueries({
     },
     isPartyFullyHealed: isFullyHealed,
     mapLocations() {
-      return mapLocationsFromPoi(getPoiData());
+      return visibleMapLocationsFromPoi(getPoiData(), state);
     },
     selectedLocation() {
-      return selectedLocationFromPoi(getPoiData(), state.selectedLocationId);
+      return visibleSelectedLocationFromPoi(getPoiData(), state, state.selectedLocationId);
     },
     operationTotalHours,
     currentOperationPhase: currentPhase,

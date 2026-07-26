@@ -6,7 +6,8 @@ export function createAppRenderHandlers({
   rosterRenderAdapter,
   dungeonRenderAdapter,
   templeRenderAdapter,
-  systemsRenderAdapter
+  systemsRenderAdapter,
+  eventRenderAdapter
 }) {
   function renderHeader() {
     headerRenderAdapter.renderHeader();
@@ -44,10 +45,15 @@ export function createAppRenderHandlers({
     systemsRenderAdapter.renderSystems();
   }
 
+  function renderEncounter() {
+    eventRenderAdapter.renderEncounter();
+  }
+
   return {
     render() {
       renderAppSections({
         header: renderHeader,
+        encounter: renderEncounter,
         map: renderMap,
         visitors: renderVisitors,
         jobs: renderJobs,
@@ -58,7 +64,23 @@ export function createAppRenderHandlers({
         systems: renderSystems
       });
     },
+    renderTimeTick(activeTab, hourFraction = 0, { dayRolledOver = false } = {}) {
+      renderHeader();
+      if (activeTab === "tavern" && dayRolledOver) {
+        rosterRenderAdapter.renderVisitors();
+      }
+      if (activeTab === "map") {
+        mapRenderAdapter.renderMapActors(hourFraction);
+      }
+      if (activeTab === "population") {
+        rosterRenderAdapter.renderJobs();
+      }
+      if (activeTab === "dungeon") {
+        dungeonRenderAdapter.renderDungeonReplay();
+      }
+    },
     renderDungeon,
+    renderEncounter,
     renderDungeonReplay() {
       dungeonRenderAdapter.renderDungeonReplay();
     },

@@ -19,7 +19,7 @@ test("upgradeTavern pays cost and increases capacity/population", () => {
 
   assert.equal(result.ok, true);
   assert.equal(state.tavern.capacity, 4);
-  assert.equal(state.tavern.population, 3);
+  assert.equal(state.tavern.population, 1);
   assert.deepEqual(paid, { wood: 10, ore: 4 });
 });
 
@@ -34,10 +34,13 @@ test("upgradeTavern blocks unaffordable upgrades", () => {
 
 test("assignWorker moves one worker between known job buckets", () => {
   const state = createInitialState();
+  state.settlement.wagePerWorker = 2;
 
   const result = assignWorker(state, "wood");
 
   assert.equal(result.ok, true);
-  assert.deepEqual(state.tavern.jobs, { wood: 2, ore: 0 });
-  assert.equal(assignWorker(state, "wood").reason, "no worker");
+  assert.deepEqual(state.tavern.jobs, { wood: 1, ore: 0, workshop: 0, research: 0 });
+  const second = assignWorker(state, "wood");
+  assert.equal(second.ok, true);
+  assert.deepEqual(state.tavern.jobs, { wood: 2, ore: 0, workshop: 0, research: 0 });
 });

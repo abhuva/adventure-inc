@@ -2,6 +2,7 @@ import { createInitialState } from "./appState.js";
 import { createAppDataContext } from "./appDataContext.js";
 import { createBrowserAutoTimeRuntime } from "./browserTimerAdapters.js";
 import { createResourceRuntime } from "./resourceRuntime.js";
+import { normalizeAppState } from "./stateNormalizer.js";
 
 export function createAppRuntimeContext({
   windowRef,
@@ -9,7 +10,7 @@ export function createAppRuntimeContext({
   templeInventorySlots,
   replayDefaultMs
 }) {
-  const state = createInitialState({ templeInventorySlots, replayDefaultMs });
+  const state = normalizeAppState(createInitialState({ templeInventorySlots, replayDefaultMs }));
   const autoTimeRuntime = createBrowserAutoTimeRuntime({ windowRef, performanceRef });
   const appDataContext = createAppDataContext();
   const el = {};

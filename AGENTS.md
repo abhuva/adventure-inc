@@ -3,8 +3,12 @@
 Always read `AI_CONTEXT.md` first. Use `NEXT_SESSION_HANDOFF.md` for the current session state, validation notes, and likely next work.
 
 Adventurer race/job/skill design lives in `docs/adventurer-skill-design.md`.
+Reusable progression graph system lives in `docs/progression-graph-system.md`.
 Temple shard design lives in `docs/temple-shard-design.md`.
 Dungeon combat replay design lives in `docs/dungeon-combat-replay-design.md`.
+Tavern visitor queue design lives in `docs/tavern-visitor-queue.md`.
+Continent expansion design lives in `docs/continent-expansion-design.md`.
+Continent expansion implementation planning lives in `docs/continent-expansion-implementation-plan.md`.
 Architecture overview lives in `docs/architecture.md`.
 
 ## Project Goal
@@ -68,8 +72,8 @@ Core prototype pillars:
 - `src/app/`: app composition, runtime context, save/load, static control binding adapters, command adapters, render adapters, and command-result log message adapters.
 - `src/core/`: pure math/format helpers.
 - `src/data/`: POI loading and validation.
-- `src/game/`: extracted deterministic game/data owners for blueprints, combat, dungeon simulation/operation/completion/automation/replay models, map pan/zoom view-state math, party selectors/commands, resources/rewards, roster data/commands/crafting, skill progression, tavern commands, Temple state/commands/bonuses/data/shard progression, time/worker-cycle helpers, and auto-time runtime.
-- `src/ui/`: DOM lookup/event helpers, tab activation helpers, select option helpers, render orchestration, and first extracted render helpers for header/status, reward text, blueprints, log rows, Population jobs, Tavern visitors, Dungeon node/replay surfaces, Map side-panel tables/details, Map world/actor HTML, Roster/party/skill/focused-character HTML, and Temple board/shard/detail HTML.
+- `src/game/`: extracted deterministic game/data owners for blueprints, combat, dungeon simulation/operation/completion/automation/replay models, map pan/zoom view-state math, party selectors/commands, generic progression graphs, resources/rewards, roster data/commands/crafting, skill progression, tavern commands, Temple state/commands/bonuses/data/shard progression, time/worker-cycle helpers, and auto-time runtime.
+- `src/ui/`: DOM lookup/event helpers, tab activation helpers, select option helpers, render orchestration, and first extracted render helpers for header/status, reward text, blueprints, log rows, Population jobs, Tavern visitors, Dungeon node/replay surfaces, Map side-panel tables/details, Map world/actor HTML, generic progression node graphs, Roster/party/skill/focused-character HTML, and Temple board/shard/detail HTML.
 - `tests/`: Node test suite for extracted pure logic.
 - `AI_CONTEXT.md`: current architecture and gameplay context for future sessions.
 - `NEXT_SESSION_HANDOFF.md`: current state and likely next work.

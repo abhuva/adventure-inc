@@ -44,6 +44,9 @@ export function createAppCallbackRegistry({
     renderSystems() {
       appRenderHandlers.renderSystems();
     },
+    renderTimeTick(activeTab, hourFraction = 0, options = {}) {
+      appRenderHandlers.renderTimeTick(activeTab, hourFraction, options);
+    },
     replaySpeedLabel() {
       return replayCommandHandlers.replaySpeedLabel();
     },

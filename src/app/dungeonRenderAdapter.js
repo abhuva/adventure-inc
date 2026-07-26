@@ -11,7 +11,11 @@ export function createDungeonRenderAdapter({
   repeatMode,
   formatReward,
   replaySpeedLabel,
-  portraitStyle
+  portraitStyle,
+  selectedTargetNodeId,
+  plannedNodeIds,
+  conquestState,
+  onSelectTargetNode
 }) {
   function renderDungeon() {
     renderDungeonPanel({
@@ -24,7 +28,11 @@ export function createDungeonRenderAdapter({
       rewardText: formatReward,
       replay: state.dungeonReplay,
       replaySpeedLabel,
-      portraitStyle
+      portraitStyle,
+      selectedTargetNodeId: selectedTargetNodeId?.(),
+      plannedNodeIds: plannedNodeIds?.() || [],
+      conquestState: conquestState?.() || {},
+      onSelectTargetNode
     });
   }
 

@@ -1,4 +1,6 @@
 import { SKILLS, SKILL_TREES } from "./skills.js";
+import { graphFromLinearTree } from "../progression/progressionGraphModel.js";
+import { canSpendProgressionPoint, progressionNodeRank } from "../progression/progressionGraphRules.js";
 
 export function availableSkillTreeIds(hero, skillTrees = SKILL_TREES) {
   const treeIds = [`race.${hero.race}`, `job.${hero.primaryJob}`];
@@ -9,19 +11,36 @@ export function availableSkillTreeIds(hero, skillTrees = SKILL_TREES) {
 }
 
 export function skillRank(hero, skillId) {
-  return (hero.learnedSkills && hero.learnedSkills[skillId]) || 0;
+  return progressionNodeRank(heroSkillProgressionState(hero), skillId);
 }
 
 export function canLearnSkill(hero, skillId, { skills = SKILLS, skillTrees = SKILL_TREES } = {}) {
-  const definition = skills[skillId];
-  if (!definition) return { ok: false, reason: "missing skill" };
-  if (hero.skillPoints <= 0) return { ok: false, reason: "no skill points" };
-  if (skillRank(hero, skillId) >= definition.maxRank) return { ok: false, reason: "max rank" };
-  if (!availableSkillTreeIds(hero, skillTrees).some((treeId) => skillTrees[treeId].skillIds.includes(skillId))) {
+  if (!skills[skillId]) return { ok: false, reason: "missing skill" };
+  const treeId = availableSkillTreeIds(hero, skillTrees).find((availableTreeId) => skillTrees[availableTreeId].skillIds.includes(skillId));
+  if (!treeId) {
     return { ok: false, reason: "tree unavailable" };
   }
-  if (!definition.requires.length || definition.requires.some((requiredId) => skillRank(hero, requiredId) > 0)) {
-    return { ok: true, reason: "available" };
-  }
-  return { ok: false, reason: "requires connected skill" };
+  const graph = skillTreeProgressionGraph(treeId, { skills, skillTrees });
+  const result = canSpendProgressionPoint(graph, heroSkillProgressionState(hero), skillId, { availablePoints: hero.skillPoints });
+  if (result.reason === "no points") return { ok: false, reason: "no skill points" };
+  if (result.reason === "requires connected node") return { ok: false, reason: "requires connected skill" };
+  return result;
+}
+
+export function heroSkillProgressionState(hero) {
+  return {
+    points: hero.learnedSkills || {},
+    availablePoints: hero.skillPoints || 0
+  };
+}
+
+export function skillTreeProgressionGraph(treeId, { skills = SKILLS, skillTrees = SKILL_TREES } = {}) {
+  const tree = skillTrees[treeId];
+  if (!tree) return null;
+  return graphFromLinearTree({
+    id: treeId,
+    name: tree.name,
+    skillIds: tree.skillIds,
+    skills
+  });
 }

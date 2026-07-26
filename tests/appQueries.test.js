@@ -8,6 +8,12 @@ function createHarness() {
     selectedPartyId: "party_alpha",
     focusedHeroId: "hero_a",
     selectedLocationId: "mine",
+    progression: {
+      unlockedLocations: { tavern: true, mine: true, rat_cellar: true },
+      dungeonClears: {},
+      dungeonMastery: {},
+      uniqueBosses: {}
+    },
     roster: [
       {
         id: "hero_a",

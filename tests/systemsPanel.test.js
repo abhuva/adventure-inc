@@ -9,10 +9,9 @@ function createElement() {
   };
 }
 
-test("renderSystemsPanel renders blueprints and log entries", () => {
+test("renderSystemsPanel renders blueprints", () => {
   const el = {
-    blueprintRows: createElement(),
-    logRows: createElement()
+    blueprintRows: createElement()
   };
 
   renderSystemsPanel({
@@ -27,18 +26,9 @@ test("renderSystemsPanel renders blueprints and log entries", () => {
     },
     unlockedBlueprints: {
       iron_blade: true
-    },
-    logEntries: [
-      {
-        type: "ok",
-        stamp: "d1 00:00",
-        text: "ready"
-      }
-    ]
+    }
   });
 
   assert.match(el.blueprintRows.innerHTML, /Iron Blade/);
   assert.match(el.blueprintRows.innerHTML, /state: unlocked/);
-  assert.match(el.logRows.innerHTML, /d1 00:00/);
-  assert.match(el.logRows.innerHTML, /ready/);
 });

@@ -9,8 +9,7 @@ export function createSystemsRenderAdapter({
     renderSystemsPanel({
       el,
       blueprints,
-      unlockedBlueprints: state.blueprints,
-      logEntries: state.log
+      unlockedBlueprints: state.blueprints
     });
   }
 

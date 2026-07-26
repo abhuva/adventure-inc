@@ -11,7 +11,8 @@ test("app callback registry forwards app-level callbacks to owners", () => {
       renderDungeonReplay: () => calls.push("renderDungeonReplay"),
       renderLocationDetail: () => calls.push("renderLocationDetail"),
       renderMapActors: (hourFraction) => calls.push(["renderMapActors", hourFraction]),
-      renderSystems: () => calls.push("renderSystems")
+      renderSystems: () => calls.push("renderSystems"),
+      renderTimeTick: (activeTab, hourFraction) => calls.push(["renderTimeTick", activeTab, hourFraction])
     },
     mapCommandHandlers: {
       assignSelectedPartyToSelectedDungeon: () => calls.push("assign"),
@@ -48,6 +49,7 @@ test("app callback registry forwards app-level callbacks to owners", () => {
   registry.renderLocationDetail();
   registry.renderMapActors(0.25);
   registry.renderSystems();
+  registry.renderTimeTick("map", 0.5);
   assert.equal(registry.replaySpeedLabel(), "2x");
   registry.selectLocation("rat_cellar");
 
@@ -62,6 +64,7 @@ test("app callback registry forwards app-level callbacks to owners", () => {
     "renderLocationDetail",
     ["renderMapActors", 0.25],
     "renderSystems",
+    ["renderTimeTick", "map", 0.5],
     ["selectLocation", "rat_cellar"]
   ]);
 });

@@ -4,6 +4,8 @@
 
 Define the first design direction for adventurer identity, race/job skill sources, multiclassing, and deterministic skill trees.
 
+The reusable implementation model is documented in `docs/progression-graph-system.md`.
+
 ## Design Goals
 
 - Support many adventurers without making them interchangeable.
@@ -219,6 +221,14 @@ Example:
 
 Effects should be explicit and inspectable. Avoid hidden state changes.
 
+Skill nodes may set `costPerRank` when a rank should cost more than one skill point. The default cost is `1`.
+
+Race trees should always include an early Resolve progression path so every ancestry has a clear way to push deeper into dungeon graphs. The current first slice adds three connected Resolve nodes per race:
+
+- a 3-rank starter node at `+1 Resolve` per rank
+- a 5-rank middle node at `+2 Resolve` per rank, costing `2` skill points per rank
+- a 5-rank deep node at `+7 Resolve` per rank, costing `5` skill points per rank
+
 ## Determinism Rules
 
 Skills must fit the deterministic game direction.
@@ -263,7 +273,11 @@ Avoid building a large tree editor or final balance pass before the model is pro
 Current prototype status:
 
 - Implemented `race`, `primaryJob`, `secondaryJob`, and `learnedSkills` fields.
-- Implemented first race/job skill definitions as constants in `src/app.js`.
-- Implemented focused-character skill buttons with the root/connected-node unlock rule.
-- Implemented first derived effects for HP, attack, defense, utility, travel time, recovery time, and food cost.
+- Implemented first race/job skill definitions in `src/game/roster/skills.js`.
+- Implemented a reusable node-based progression graph backend in `src/game/progression/`.
+- Character skill availability now adapts race/job skills onto the generic graph unlock rules.
+- Implemented focused-character skill trees as node graphs with lines, rank labels, locked/available/learned visual states, and the root/connected-node unlock rule.
+- Implemented skill-node hover panels with generated flavor text, rank/cost/requirements, current availability state, and current-to-next effect deltas.
+- Implemented first derived effects for HP, attack, defense, utility, Resolve, travel time, recovery time, and food cost.
+- Implemented per-rank skill costs through `costPerRank`, including race Resolve chains with higher-cost deeper ranks.
 - Not yet implemented: respec/refund, secondary-job selection UI, per-character combat tactics, final balancing, or external data files.

@@ -15,13 +15,33 @@ export function mapPoiButtonHtml(item, selectedLocationId) {
   `;
 }
 
-export function mapWorldHtml({ poi, tavernCoord, selectedLocationId }) {
+export function mapContextMenuHtml(contextMenu, locationsById = {}) {
+  if (!contextMenu?.locationId) return "";
+  const location = locationsById[contextMenu.locationId];
+  if (!location || location.type !== "dungeon") return "";
+  return `
+    <div class="map-context-menu" style="left:${contextMenu.x}px;top:${contextMenu.y}px">
+      <button type="button" data-map-context-action="run">run</button>
+      <button type="button" data-map-context-action="cancel">cancel</button>
+    </div>
+  `;
+}
+
+function mapWorldStyle(mapWorld = {}) {
+  const width = mapWorld.width || 1024;
+  const height = mapWorld.height || 1024;
+  const backgroundImage = mapWorld.backgroundImage || mapWorld.src || "assets/map-bg.png";
+  return `--map-world-width:${width}px;--map-world-height:${height}px;--map-bg-image:url("${backgroundImage}")`;
+}
+
+export function mapWorldHtml({ poi, tavernCoord, selectedLocationId, mapWorld, contextMenu }) {
   const routeHtml = poi
     .filter((item) => item.id !== "tavern")
     .map((item) => mapRouteHtml(tavernCoord, item.coord))
     .join("");
   const poiHtml = poi.map((item) => mapPoiButtonHtml(item, selectedLocationId)).join("");
-  return `<div id="mapWorld" class="map-world">${routeHtml}${poiHtml}<div id="mapActors" class="map-actors"></div></div>`;
+  const locationsById = Object.fromEntries(poi.map((item) => [item.id, item]));
+  return `${mapContextMenuHtml(contextMenu, locationsById)}<div id="mapWorld" class="map-world" style='${mapWorldStyle(mapWorld)}'>${routeHtml}${poiHtml}<div id="mapActors" class="map-actors"></div></div>`;
 }
 
 export function workerActorHtml({ site, count, coord }) {

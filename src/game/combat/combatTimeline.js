@@ -46,6 +46,22 @@ export function resolveNode(node, stats, partyActors, strategy, timeline) {
     };
   }
 
+  if (!node.enemy) {
+    pushReplayEvent(timeline, {
+      type: "objective",
+      icon: "OK",
+      text: `${node.name}: objective secured.`,
+      partyActors,
+      enemyActors: []
+    });
+    return {
+      success: true,
+      hp: partyHpCurrent(partyActors),
+      hours: 1,
+      summary: "objective secured"
+    };
+  }
+
   return resolveCombat(node, stats, partyActors, strategy, timeline);
 }
 
@@ -169,6 +185,9 @@ export function createPartyCombatActors(partyMembers) {
       atk: stats.atk,
       def: stats.def,
       utility: stats.utility,
+      resolveMax: stats.resolve ?? 10,
+      resolveLeft: stats.resolve ?? 10,
+      withdrew: false,
       initiative,
       speed,
       nextActionAt: Math.max(0, 100 - initiative),

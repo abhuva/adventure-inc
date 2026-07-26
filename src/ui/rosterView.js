@@ -1,4 +1,6 @@
 import { formatLabel } from "../core/format.js";
+import { graphFromLinearTree } from "../game/progression/progressionGraphModel.js";
+import { progressionGraphHtml } from "./progressionGraphView.js";
 
 export function portraitStyle(spriteIndex, { columns, rows }) {
   const safeIndex = Math.max(0, Math.min(columns * rows - 1, spriteIndex));
@@ -62,23 +64,135 @@ export function skillButtonHtml({ hero, skillId, skills, skillRank, canLearnSkil
   const state = canLearnSkill(hero, skillId);
   const requires = definition.requires.length ? `req: ${definition.requires.map((id) => skills[id]?.name || id).join(" OR ")}` : "root";
   return `
-    <button class="skill-node ${rank > 0 ? "learned" : ""}" data-learn-skill="${skillId}" ${state.ok ? "" : "disabled"} title="${requires}; ${state.reason}">
+    <button class="skill-node ${rank > 0 ? "learned" : ""}" data-learn-skill="${skillId}" ${state.ok ? "" : "disabled"} aria-label="${definition.name}: ${state.reason}">
       <span>${definition.name}</span>
       <span>${definition.category} ${rank}/${definition.maxRank}</span>
+      ${skillDetailPanelHtml({
+        hero,
+        skillId,
+        skills,
+        skillRank,
+        canLearnSkill
+      })}
     </button>
   `;
 }
 
 export function skillTreesHtml({ hero, availableSkillTreeIds, skillTrees, skills, skillRank, canLearnSkill }) {
   return availableSkillTreeIds(hero).map((treeId) => {
-    const tree = skillTrees[treeId];
-    return `
-      <div class="skill-tree">
-        <div class="skill-tree-title">${tree.name}</div>
-        ${tree.skillIds.map((skillId) => skillButtonHtml({ hero, skillId, skills, skillRank, canLearnSkill })).join("")}
-      </div>
-    `;
+    return skillTreeHtml({
+      hero,
+      treeId,
+      skillTrees,
+      skills,
+      skillRank,
+      canLearnSkill
+    });
   }).join("");
+}
+
+export function skillTreeHtml({ hero, treeId, skillTrees, skills, skillRank, canLearnSkill }) {
+  const tree = skillTrees[treeId];
+  if (!tree) return `<div class="empty-state">skill tree unavailable</div>`;
+  const graph = graphFromLinearTree({
+    id: treeId,
+    name: tree.name,
+    skillIds: tree.skillIds,
+    skills
+  });
+  return `
+    <div class="skill-tree">
+      <div class="skill-tree-title">${tree.name}</div>
+      ${progressionGraphHtml({
+        graph,
+        state: {
+          points: hero.learnedSkills || {},
+          availablePoints: hero.skillPoints || 0
+        },
+        canSpendNode: (skillId) => canLearnSkill(hero, skillId),
+        nodeLabel: (node) => `${node.category} ${skillRank(hero, node.id)}/${node.maxRank}`,
+        nodeDetailHtml: (node) => skillDetailPanelHtml({
+          hero,
+          skillId: node.id,
+          skills,
+          skillRank,
+          canLearnSkill
+        }),
+        actionAttribute: "data-learn-skill"
+      })}
+    </div>
+  `;
+}
+
+export function skillDetailPanelHtml({ hero, skillId, skills, skillRank, canLearnSkill }) {
+  const definition = skills[skillId];
+  if (!definition) return "";
+  const rank = skillRank(hero, skillId);
+  const state = canLearnSkill(hero, skillId);
+  const nextRank = Math.min(definition.maxRank, rank + 1);
+  const cost = Math.max(1, Number(definition.costPerRank || 1));
+  const requires = definition.requires.length
+    ? definition.requires.map((id) => skills[id]?.name || id).join(", ")
+    : "none";
+  return `
+    <span class="skill-detail-panel">
+      <strong>${definition.name}</strong>
+      <span>${skillFlavorText(definition)}</span>
+      <span>Category: ${definition.category}</span>
+      <span>Rank: ${rank}/${definition.maxRank}${rank < definition.maxRank ? ` -> ${nextRank}/${definition.maxRank}` : " maxed"}</span>
+      <span>Cost: ${rank < definition.maxRank ? `${cost} skill point${cost === 1 ? "" : "s"}` : "max rank reached"}</span>
+      <span>Requires: ${requires}</span>
+      <span>State: ${state.reason}</span>
+      <span>Effects</span>
+      ${(definition.effects || []).map((effect) => skillEffectRowHtml(effect, rank)).join("") || `<span class="skill-effect-row"><span>None</span><span>no stat change</span></span>`}
+    </span>
+  `;
+}
+
+function skillEffectRowHtml(effect, rank) {
+  const current = (effect.valuePerRank || 0) * rank;
+  const next = current + (effect.valuePerRank || 0);
+  return `
+    <span class="skill-effect-row">
+      <span>${skillEffectLabel(effect.type)}</span>
+      <span>${formatSigned(current)} -> ${formatSigned(next)} (${formatSigned(effect.valuePerRank || 0)} / rank)</span>
+    </span>
+  `;
+}
+
+function skillEffectLabel(type) {
+  const labels = {
+    atk_add: "Attack",
+    def_add: "Defense",
+    hp_add: "Max HP",
+    utility_add: "Utility",
+    resolve_add: "Resolve",
+    travel_speed_add: "Travel speed",
+    recovery_reduce: "Recovery time",
+    food_cost_reduce: "Food cost",
+    food_cost_add: "Food cost",
+    skill_point_bonus: "Skill points",
+    hire_discount: "Hire cost"
+  };
+  return labels[type] || formatLabel(type);
+}
+
+function skillFlavorText(definition) {
+  const firstEffect = definition.effects?.[0]?.type || "";
+  if (firstEffect.includes("atk")) return "A practiced edge for ending danger before it spreads.";
+  if (firstEffect.includes("def") || firstEffect.includes("hp")) return "A steadier stance when the dungeon starts pushing back.";
+  if (firstEffect.includes("resolve")) return "A deeper reserve for pushing farther before turning back.";
+  if (firstEffect.includes("travel")) return "Footwork, maps, and habits that shorten the road.";
+  if (firstEffect.includes("recovery")) return "Field discipline that makes the return to town less costly.";
+  if (firstEffect.includes("food")) return "Packing sense and appetite control for longer routes.";
+  if (firstEffect.includes("skill_point")) return "Flexible training that opens another choice later.";
+  if (firstEffect.includes("hire")) return "A better read on people before coin changes hands.";
+  return "A small, reliable technique that compounds through repeated runs.";
+}
+
+function formatSigned(value) {
+  if (value > 0) return `+${value}`;
+  return String(value);
 }
 
 export function characterCardHtml({ hero, stats, status, focusedHeroId, minimized, atlas }) {
@@ -106,6 +220,7 @@ export function characterCardHtml({ hero, stats, status, focusedHeroId, minimize
           <span>atk ${stats.atk}</span>
           <span>def ${stats.def}</span>
           <span>utl ${stats.utility}</span>
+          <span>rsv ${stats.resolve}</span>
         </div>
       </div>
     </button>
@@ -130,29 +245,39 @@ export function focusedCharacterHtml({
   currentParty,
   blueprints,
   atlas,
-  skillTreeHtml
+  activeTab = "info",
+  skillTreePanelsHtml = "",
+  skillTreeHtml: legacySkillTreeHtml = ""
 }) {
   const canAddToCurrentParty = status.state === "Idle" && !currentParty.memberIds.includes(hero.id);
+  const selectedTab = ["info", "skill1", "skill2"].includes(activeTab) ? activeTab : "info";
   return `
-    <div class="detail-hero-head">
-      ${portraitHtml(hero, "large", atlas)}
-      <div>
-        <div class="detail-title">${hero.name}</div>
-        <div class="detail-line">${formatLabel(hero.race)} ${hero.role} / ${status.state}</div>
-        <div class="detail-line">party: ${status.party}</div>
+    <div class="local-tab-panel ${selectedTab === "info" ? "active" : ""}" data-roster-detail-panel="info">
+      <div class="detail-hero-head">
+        ${portraitHtml(hero, "large", atlas)}
+        <div>
+          <div class="detail-title">${hero.name}</div>
+          <div class="detail-line">${formatLabel(hero.race)} ${hero.role} / ${status.state}</div>
+          <div class="detail-line">party: ${status.party}</div>
+        </div>
+      </div>
+      <div class="detail-line">level: ${hero.level} (${hero.xp}/${hero.level * 8} xp), skill points: ${hero.skillPoints}</div>
+      <div class="detail-line">race: ${formatLabel(hero.race)} / primary job: ${formatLabel(hero.primaryJob)} / secondary: ${hero.secondaryJob ? formatLabel(hero.secondaryJob) : "locked"}</div>
+      <div class="detail-line">hp: ${hero.hp}/${stats.hpMax}</div>
+      <div class="bar"><span style="width:${hpPercent(hero, stats)}%"></span></div>
+      <div class="detail-line">atk ${stats.atk} / def ${stats.def} / utility ${stats.utility} / resolve ${stats.resolve}</div>
+      <div class="detail-line">travel +${stats.travelSpeed} / recovery -${stats.recoveryReduce} / food ${stats.foodCostReduce >= 0 ? "-" : "+"}${Math.abs(stats.foodCostReduce)}</div>
+      <div class="detail-line">gear: ${hero.gear.length ? hero.gear.map((id) => blueprints[id].name).join(", ") : "none"}</div>
+      <div class="detail-line">atlas slot: ${hero.spriteIndex ?? 0}</div>
+      <div class="row-actions">
+        <button data-craft-focused="ironBlade">craft iron blade</button>
+        <button data-craft-focused="wardCharm">craft ward charm</button>
+        <button id="addFocusedToPartyBtn" ${canAddToCurrentParty ? "" : "disabled"}>add to current party</button>
       </div>
     </div>
-    <div class="detail-line">level: ${hero.level} (${hero.xp}/${hero.level * 8} xp), skill points: ${hero.skillPoints}</div>
-    <div class="detail-line">race: ${formatLabel(hero.race)} / primary job: ${formatLabel(hero.primaryJob)} / secondary: ${hero.secondaryJob ? formatLabel(hero.secondaryJob) : "locked"}</div>
-    <div class="detail-line">hp: ${hero.hp}/${stats.hpMax}</div>
-    <div class="bar"><span style="width:${hpPercent(hero, stats)}%"></span></div>
-    <div class="detail-line">atk ${stats.atk} / def ${stats.def} / utility ${stats.utility}</div>
-    <div class="detail-line">travel +${stats.travelSpeed} / recovery -${stats.recoveryReduce} / food ${stats.foodCostReduce >= 0 ? "-" : "+"}${Math.abs(stats.foodCostReduce)}</div>
-    <div class="detail-line">gear: ${hero.gear.length ? hero.gear.map((id) => blueprints[id].name).join(", ") : "none"}</div>
-    <div class="detail-line">atlas slot: ${hero.spriteIndex ?? 0}</div>
-    <div class="row-actions">
-      <button id="addFocusedToPartyBtn" ${canAddToCurrentParty ? "" : "disabled"}>add to current party</button>
-    </div>
-    <div class="skill-tree-panel">${skillTreeHtml}</div>
+    ${skillTreePanelsHtml || `
+      <div class="local-tab-panel ${selectedTab === "skill1" ? "active" : ""}" data-roster-detail-panel="skill1"><div class="skill-tree-panel">${legacySkillTreeHtml}</div></div>
+      <div class="local-tab-panel ${selectedTab === "skill2" ? "active" : ""}" data-roster-detail-panel="skill2"><div class="empty-state">no second skill tree</div></div>
+    `}
   `;
 }

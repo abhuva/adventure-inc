@@ -15,4 +15,7 @@ export function populateStopNodes({ el, dungeon }) {
 
 export function populatePartySelect({ el, parties, selectedPartyId }) {
   renderPartySelect(el.partySelect, parties, selectedPartyId);
+  if (el.mapPartySelect) {
+    renderPartySelect(el.mapPartySelect, parties, selectedPartyId);
+  }
 }

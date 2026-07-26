@@ -38,9 +38,12 @@ function createMapElement() {
   };
 }
 
-function createTarget(isPoi = false) {
+function createTarget(isPoi = false, isContextAction = false) {
   return {
     closest(selector) {
+      if (selector === "[data-location-id], [data-map-context-action]") {
+        return isPoi || isContextAction ? {} : null;
+      }
       return isPoi && selector === "[data-location-id]" ? {} : null;
     }
   };
@@ -96,6 +99,24 @@ test("setupMapInteractions ignores pointerdown on POI labels", () => {
   assert.equal(mapElement.hasPointerCapture(7), false);
 });
 
+test("setupMapInteractions ignores pointerdown on map context actions", () => {
+  const mapElement = createMapElement();
+  const mapView = { panX: 0, panY: 0, zoom: 1 };
+
+  setupMapInteractions({
+    mapElement,
+    mapView,
+    minZoom: 0.5,
+    maxZoom: 3,
+    applyMapTransform: () => {},
+    renderLocationDetail: () => {}
+  });
+
+  mapElement.listeners.pointerdown.callback({ clientX: 20, clientY: 30, pointerId: 7, target: createTarget(false, true) });
+  assert.equal(mapView.dragging, undefined);
+  assert.equal(mapElement.hasPointerCapture(7), false);
+});
+
 test("setupMapInteractions zooms around cursor and refreshes side detail", () => {
   const mapElement = createMapElement();
   const mapView = { panX: 0, panY: 0, zoom: 1 };
@@ -132,4 +153,31 @@ test("setupMapInteractions zooms around cursor and refreshes side detail", () =>
   assert.equal(mapView.panY.toFixed(1), "-12.0");
   assert.equal(transformCalls, 1);
   assert.equal(detailCalls, 1);
+});
+
+test("setupMapInteractions reads replaced map view through getter", () => {
+  const mapElement = createMapElement();
+  const state = {
+    mapView: { panX: 0, panY: 0, zoom: 1 }
+  };
+  let transformCalls = 0;
+
+  setupMapInteractions({
+    mapElement,
+    mapView: () => state.mapView,
+    minZoom: 0.5,
+    maxZoom: 4,
+    applyMapTransform: () => {
+      transformCalls += 1;
+    },
+    renderLocationDetail: () => {}
+  });
+
+  state.mapView = { panX: 10, panY: 20, zoom: 1 };
+  mapElement.listeners.pointerdown.callback({ clientX: 20, clientY: 30, pointerId: 7, target: createTarget(false) });
+  mapElement.listeners.pointermove.callback({ clientX: 25, clientY: 40 });
+
+  assert.equal(state.mapView.panX, 15);
+  assert.equal(state.mapView.panY, 30);
+  assert.equal(transformCalls, 1);
 });

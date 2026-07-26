@@ -1,6 +1,8 @@
 import { heroStats } from "./heroStats.js";
 import { SKILLS, SKILL_TREES } from "./skills.js";
 import { canLearnSkill, skillRank } from "./skillProgression.js";
+import { isVisitorPresent } from "./visitorQueue.js";
+import { progressionNodeCost } from "../progression/progressionGraphRules.js";
 
 export function nextVisitor(roster, visitors) {
   const recruitedIds = new Set(roster.map((hero) => hero.id));
@@ -29,6 +31,9 @@ export function createHeroFromVisitor(visitor) {
 export function recruitVisitor(state, visitorId, visitors, { canPay, pay } = {}) {
   const visitor = visitors.find((item) => item.id === visitorId);
   if (!visitor) return { ok: false, reason: "visitor missing" };
+  if (!isVisitorPresent(state, visitorId)) {
+    return { ok: false, reason: "not visiting", visitor };
+  }
   if (state.roster.length >= state.tavern.capacity) {
     return { ok: false, reason: "capacity", visitor };
   }
@@ -38,6 +43,7 @@ export function recruitVisitor(state, visitorId, visitors, { canPay, pay } = {})
   if (pay) pay(visitor.cost);
   const hero = createHeroFromVisitor(visitor);
   state.roster.push(hero);
+  delete state.tavernVisitors.visitors[visitorId];
   return { ok: true, visitor, hero };
 }
 
@@ -68,7 +74,8 @@ export function learnSkill(state, heroId, skillId, {
 
   const oldStats = heroStats(hero);
   const wasFullyHealed = hero.hp >= oldStats.hpMax;
-  hero.skillPoints -= 1;
+  const cost = progressionNodeCost(skills[skillId]);
+  hero.skillPoints -= cost;
   hero.learnedSkills = { ...(hero.learnedSkills || {}) };
   hero.learnedSkills[skillId] = skillRank(hero, skillId) + 1;
   skills[skillId].effects.forEach((effect) => {

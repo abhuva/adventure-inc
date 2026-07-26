@@ -1,5 +1,6 @@
 export const DEFAULT_RENDER_ORDER = [
   "header",
+  "encounter",
   "map",
   "visitors",
   "jobs",

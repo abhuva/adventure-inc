@@ -13,4 +13,6 @@ test("createInitialState creates independent mutable state objects", () => {
   assert.equal(second.temple.stones.triangle.inventorySlots[0], null);
   assert.equal(first.dungeonReplay.playbackMs, 123);
   assert.equal(first.temple.stones.square.inventorySlots.length, 3);
+  assert.equal(first.events.activeId, null);
+  assert.notEqual(first.events.seen, second.events.seen);
 });

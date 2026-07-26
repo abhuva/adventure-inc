@@ -4,9 +4,14 @@ export const CHARACTER_ATLAS = {
 };
 
 export const MAP_VIEW_CONFIG = {
-  worldSize: 1024,
   minZoom: 0.35,
   maxZoom: 3
+};
+
+export const MAP_BACKGROUND = {
+  src: "assets/map-bg.png",
+  fallbackWidth: 1024,
+  fallbackHeight: 1024
 };
 
 export const TEMPLE_INVENTORY_SLOTS = 20;

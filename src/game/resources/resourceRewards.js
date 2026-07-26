@@ -18,7 +18,7 @@ export function payCost(resources, cost = {}) {
 
 export function applyRewards(state, rewards = {}) {
   Object.entries(rewards).forEach(([key, value]) => {
-    if (key === "xp" || key === "blueprint") return;
+    if (key === "xp" || key === "blueprint" || key === "dungeonXp") return;
     if (key === "fame") {
       state.tavern.fame += value;
       return;

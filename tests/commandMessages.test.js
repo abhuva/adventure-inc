@@ -9,7 +9,6 @@ import {
   autoTimeToggleMessage,
   cancelPartyActionResultMessage,
   craftResultMessage,
-  dailyTavernIncomeMessage,
   focusHeroResultMessage,
   heroLevelUpMessage,
   learnSkillResultMessages,
@@ -182,10 +181,6 @@ test("time and progression messages format deterministic log events", () => {
   assert.deepEqual(
     newVisitorQueuedMessage("Mira", "Healer"),
     { text: "new visitor queued: Mira (Healer)", type: "ok", shouldRender: true }
-  );
-  assert.deepEqual(
-    dailyTavernIncomeMessage({ food: 6, coin: 4 }),
-    { text: "daily tavern income: +6 food, +4 coin", type: "ok", shouldRender: true }
   );
   assert.deepEqual(
     mapRepeatedAssignmentMessage("Alpha", "Rat Cellar"),

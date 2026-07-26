@@ -52,3 +52,37 @@ test("resolveNode combat emits replay events and resolves deterministic victory"
   assert.equal(timeline[0].type, "combat_start");
   assert.equal(timeline.some((event) => event.type === "attack"), true);
 });
+
+test("resolveNode treats miniboss nodes with enemies as combat encounters", () => {
+  const actors = createPartyCombatActors([hero({
+    base: { hp: 58, atk: 10, def: 3, utility: 2 },
+    hp: 58
+  })]);
+  const timeline = [];
+  const result = resolveNode({
+    id: "scent_warden",
+    name: "Scent Warden",
+    type: "miniboss",
+    enemy: {
+      hp: 46,
+      atk: 7,
+      def: 1,
+      initiative: 42,
+      speed: 24,
+      script: ["bite", "shriek", "guard", "heavy"]
+    }
+  }, {
+    hpMax: 58,
+    hpCurrent: 58,
+    atk: 10,
+    def: 3,
+    utility: 2,
+    travelSpeed: 0,
+    recoveryReduce: 0,
+    foodCostReduce: 0
+  }, actors, "balanced", timeline);
+
+  assert.equal(timeline[0].type, "combat_start");
+  assert.equal(timeline.some((event) => event.type === "enemy"), true);
+  assert.notEqual(result.summary, "objective secured");
+});

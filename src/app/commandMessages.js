@@ -4,6 +4,9 @@ export function recruitResultMessage(result, state) {
   if (!result.ok && result.reason === "capacity") {
     return { text: `recruit blocked: tavern capacity ${state.tavern.capacity}`, type: "warn", shouldRender: true };
   }
+  if (!result.ok && result.reason === "not visiting") {
+    return { text: `recruit blocked: ${result.visitor.name} is not waiting in the tavern`, type: "warn", shouldRender: true };
+  }
   if (!result.ok && result.reason === "cost") {
     return { text: `recruit blocked: ${result.visitor.name} needs ${formatCost(result.visitor.cost)}`, type: "warn", shouldRender: true };
   }
@@ -65,9 +68,93 @@ export function upgradeTavernResultMessage(result, state, fallbackCost) {
 
 export function assignWorkerResultMessage(result, job) {
   if (!result.ok) {
-    return { text: `assignment blocked: no ${result.other} worker to move`, type: "warn", shouldRender: true };
+    if (result.other) {
+      return { text: `assignment blocked: no ${result.other} worker to move`, type: "warn", shouldRender: true };
+    }
+    return { text: `assignment blocked: ${result.reason || "no worker"} for ${job}`, type: "warn", shouldRender: true };
   }
-  return { text: `worker moved from ${result.other} to ${job}`, type: "ok", shouldRender: true };
+  if (result.other || (result.source && result.source !== "unassigned")) {
+    return { text: `worker moved from ${result.other || result.source} to ${job}`, type: "ok", shouldRender: true };
+  }
+  return { text: `worker assigned to ${job} from ${result.source}`, type: "ok", shouldRender: true };
+}
+
+export function adjustWorkerResultMessage(result, job) {
+  if (!result.ok) {
+    return { text: `worker change blocked: ${result.reason || "blocked"} for ${job}`, type: "warn", shouldRender: true };
+  }
+  const direction = result.delta > 0 ? "added to" : "removed from";
+  return {
+    text: `worker ${direction} ${job}: ${result.workers} assigned, ${result.unassigned} unassigned`,
+    type: "ok",
+    shouldRender: true
+  };
+}
+
+export function adjustWageResultMessage(result) {
+  if (!result.ok) {
+    return { text: `worker upkeep is fixed: ${result.reason || "blocked"}`, type: "warn", shouldRender: true };
+  }
+  return {
+    text: `worker upkeep set to ${result.wagePerWorker} coin/day; available workers ${result.availableWorkers}`,
+    type: "ok",
+    shouldRender: true
+  };
+}
+
+export function buildHousesResultMessage(result) {
+  if (!result.ok) {
+    return { text: `worker hire blocked: needs ${formatCost(result.cost || {})}`, type: "warn", shouldRender: true };
+  }
+  return {
+    text: `worker hired: ${result.availableWorkers} total workers; next ${formatCost(result.nextCost || {})}`,
+    type: "ok",
+    shouldRender: true
+  };
+}
+
+export function workshopRecipeResultMessage(result) {
+  if (!result.ok) {
+    return { text: `workshop recipe blocked: ${result.reason}`, type: "warn", shouldRender: true };
+  }
+  return { text: `workshop slot ${result.slotIndex + 1} set to ${result.recipe.name}`, type: "ok", shouldRender: true };
+}
+
+export function workshopAutoInputsResultMessage(result) {
+  if (!result.ok) {
+    return { text: `workshop auto-input blocked: ${result.reason}`, type: "warn", shouldRender: true };
+  }
+  return { text: `workshop slot ${result.slotIndex + 1} auto-inputs ${result.enabled ? "on" : "off"}`, type: "ok", shouldRender: true };
+}
+
+export function workshopUpgradeResultMessage(result) {
+  if (!result.ok) {
+    return { text: `workshop upgrade blocked: ${result.reason}`, type: "warn", shouldRender: true };
+  }
+  return { text: `workshop upgrade learned: ${result.node.name} ${result.rank}/${result.node.maxRank}`, type: "ok", shouldRender: true };
+}
+
+export function workshopCraftedMessage(event, rewardText) {
+  return { text: `workshop crafted ${event.recipe.name}: ${rewardText}`, type: "ok", shouldRender: true };
+}
+
+export function workshopBlockedMessage(event) {
+  return { text: `workshop paused ${event.recipe.name}: missing inputs`, type: "warn", shouldRender: true };
+}
+
+export function workshopResearchMessage(pointsGained) {
+  return { text: `workshop research complete: +${pointsGained} upgrade point${pointsGained === 1 ? "" : "s"}`, type: "ok", shouldRender: true };
+}
+
+export function settlementUpkeepMessage(result) {
+  const missing = [];
+  if (result.wageMissing > 0) missing.push(`${result.wageMissing} coin wages`);
+  const suffix = missing.length ? `; missing ${missing.join(", ")}; production x${result.productionMultiplier}` : "";
+  return {
+    text: `worker upkeep: ${result.workers} workers, paid ${result.wagePaid}/${result.wageRequired} coin${suffix}`,
+    type: missing.length ? "warn" : "ok",
+    shouldRender: true
+  };
 }
 
 export function autoTimeToggleMessage(result) {
@@ -91,10 +178,6 @@ export function heroLevelUpMessage(heroName, level) {
 
 export function newVisitorQueuedMessage(visitorName, role) {
   return { text: `new visitor queued: ${visitorName} (${role})`, type: "ok", shouldRender: true };
-}
-
-export function dailyTavernIncomeMessage(income) {
-  return { text: `daily tavern income: +${income.food} food, +${income.coin} coin`, type: "ok", shouldRender: true };
 }
 
 export function addPartyResultMessage(result) {
@@ -173,6 +256,17 @@ export function operationQueuedMessage({ automated, label, foodCost }) {
 
 export function mapRepeatedAssignmentMessage(partyName, dungeonName) {
   return { text: `repeated map assignment set: ${partyName} -> ${dungeonName}`, type: "ok", shouldRender: true };
+}
+
+export function workSiteUpgradeResultMessage(result, siteName) {
+  if (!result.ok) {
+    return { text: `location upgrade blocked: ${siteName} needs ${formatCost(result.cost || {})}`, type: "warn", shouldRender: true };
+  }
+  return {
+    text: `${siteName} upgraded: level ${result.level}, workplaces ${result.maxWorkers}`,
+    type: "ok",
+    shouldRender: true
+  };
 }
 
 export function templeResonanceMessage(rewardText) {

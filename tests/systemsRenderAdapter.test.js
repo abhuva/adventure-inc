@@ -9,23 +9,15 @@ function element() {
   };
 }
 
-test("systems render adapter renders blueprints and log from app state", () => {
+test("systems render adapter renders blueprints from app state", () => {
   const el = {
-    blueprintRows: element(),
-    logRows: element()
+    blueprintRows: element()
   };
   const adapter = createSystemsRenderAdapter({
     state: {
       blueprints: {
         iron_blade: true
-      },
-      log: [
-        {
-          type: "bad",
-          stamp: "d3 04:00",
-          text: "POI data load failed"
-        }
-      ]
+      }
     },
     el,
     blueprints: {
@@ -42,6 +34,4 @@ test("systems render adapter renders blueprints and log from app state", () => {
 
   assert.match(el.blueprintRows.innerHTML, /Iron Blade/);
   assert.match(el.blueprintRows.innerHTML, /state: unlocked/);
-  assert.match(el.logRows.innerHTML, /d3 04:00/);
-  assert.match(el.logRows.innerHTML, /POI data load failed/);
 });

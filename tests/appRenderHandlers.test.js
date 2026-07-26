@@ -29,6 +29,9 @@ function createHarness() {
     },
     systemsRenderAdapter: {
       renderSystems: () => calls.push("systems")
+    },
+    eventRenderAdapter: {
+      renderEncounter: () => calls.push("encounter")
     }
   });
   return { calls, handlers };
@@ -41,6 +44,7 @@ test("app render handlers preserve top-level render order", () => {
 
   assert.deepEqual(calls, [
     "header",
+    "encounter",
     "map",
     "visitors",
     "jobs",
@@ -58,12 +62,38 @@ test("app render handlers expose focused render delegates", () => {
   handlers.renderMapActors(0.5);
   handlers.renderLocationDetail();
   handlers.renderDungeonReplay();
+  handlers.renderEncounter();
   handlers.renderSystems();
 
   assert.deepEqual(calls, [
     ["mapActors", 0.5],
     "locationDetail",
     "dungeonReplay",
+    "encounter",
     "systems"
+  ]);
+});
+
+test("app render handlers expose scoped time tick render", () => {
+  const { calls, handlers } = createHarness();
+
+  handlers.renderTimeTick("map", 0.5);
+  handlers.renderTimeTick("population", 0.25);
+  handlers.renderTimeTick("dungeon", 0.75);
+  handlers.renderTimeTick("roster", 0.1);
+  handlers.renderTimeTick("tavern", 0.2, { dayRolledOver: true });
+  handlers.renderTimeTick("tavern", 0.3, { dayRolledOver: false });
+
+  assert.deepEqual(calls, [
+    "header",
+    ["mapActors", 0.5],
+    "header",
+    "jobs",
+    "header",
+    "dungeonReplay",
+    "header",
+    "header",
+    "visitors",
+    "header"
   ]);
 });

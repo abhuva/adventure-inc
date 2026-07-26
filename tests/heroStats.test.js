@@ -11,7 +11,8 @@ test("heroStats applies level, gear, and learned skill effects", () => {
     learnedSkills: {
       "job.guard.steady_stance": 1,
       "job.guard.shield_wall": 2,
-      "race.elf.light_step": 1
+      "race.elf.light_step": 1,
+      "race.elf.resolve_nerve": 3
     }
   };
 
@@ -20,6 +21,7 @@ test("heroStats applies level, gear, and learned skill effects", () => {
     atk: 11,
     def: 6,
     utility: 1,
+    resolve: 14,
     travelSpeed: 1,
     recoveryReduce: 0,
     foodCostReduce: 0

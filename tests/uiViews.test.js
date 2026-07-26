@@ -4,6 +4,7 @@ import test from "node:test";
 import { blueprintRowsHtml } from "../src/ui/blueprintView.js";
 import {
   dungeonEstimateText,
+  dungeonNodeGraphHtml,
   dungeonNodeMapHtml,
   replayActorRowsHtml,
   replayEmptyState,
@@ -24,7 +25,8 @@ import {
   partyActorHtml,
   workerActorHtml
 } from "../src/ui/mapWorldView.js";
-import { populationJobRowsHtml } from "../src/ui/populationView.js";
+import { populationJobRowsHtml, populationResourceRowsHtml, renderPopulationJobs } from "../src/ui/populationView.js";
+import { progressionGraphHtml } from "../src/ui/progressionGraphView.js";
 import {
   compactStateLabel,
   focusedCharacterHtml,
@@ -37,7 +39,7 @@ import {
   skillButtonHtml,
   skillTreesHtml
 } from "../src/ui/rosterView.js";
-import { visitorQueueHtml } from "../src/ui/tavernView.js";
+import { tavernUpgradeButtonHtml, visitorDetailHtml, visitorQueueHtml } from "../src/ui/tavernView.js";
 import { formatReward } from "../src/ui/rewardText.js";
 import {
   formatTempleEffectType,
@@ -68,7 +70,27 @@ test("resourceTitleLine formats global resources", () => {
     }
   });
 
-  assert.equal(text, "coin 12 / food 8 / wood 5 / ore 3 / hide 2 / fame 9");
+  assert.equal(text, "coin 12 / fame 9");
+});
+
+test("populationResourceRowsHtml renders gathered resources", () => {
+  const html = populationResourceRowsHtml({
+    food: 8,
+    wood: 5,
+    ore: 3,
+    hide: 2,
+    planks: 1,
+    comfort_goods: 4,
+    training_bow: 6
+  });
+
+  assert.match(html, /<td>food<\/td>\s*<td>8<\/td>/);
+  assert.match(html, /<td>wood<\/td>\s*<td>5<\/td>/);
+  assert.match(html, /<td>ore<\/td>\s*<td>3<\/td>/);
+  assert.match(html, /<td>hide<\/td>\s*<td>2<\/td>/);
+  assert.match(html, /<td>planks<\/td>\s*<td>1<\/td>/);
+  assert.match(html, /<td>comfort<\/td>\s*<td>4<\/td>/);
+  assert.match(html, /<td>bows<\/td>\s*<td>6<\/td>/);
 });
 
 test("formatReward resolves blueprint names", () => {
@@ -133,17 +155,34 @@ test("logRowsHtml renders typed log entries", () => {
   assert.match(html, /ready/);
 });
 
-test("populationJobRowsHtml renders work sites and fame-scaled kitchen output", () => {
+test("populationJobRowsHtml renders work sites and settlement workforce output", () => {
   const html = populationJobRowsHtml({
+    state: {
+      tavern: {
+        fame: 7,
+        jobs: {
+          wood: 3,
+          workshop: 1,
+          research: 0
+        }
+      },
+      settlement: {
+        availableWorkers: 5,
+        hiredWorkers: 5,
+        happiness: 75,
+        wagePerWorker: 1,
+        productionMultiplier: 1
+      }
+    },
     tavern: {
       fame: 7,
       jobs: {
-        north_woodlot: 3
+        wood: 3
       }
     },
     workSites: [
       {
-        id: "north_woodlot",
+        id: "wood",
         name: "North Woodlot",
         output: { wood: 2 },
         cycleHours: 4
@@ -153,14 +192,150 @@ test("populationJobRowsHtml renders work sites and fame-scaled kitchen output", 
   });
 
   assert.match(html, /North Woodlot/);
-  assert.match(html, /<td>3<\/td>/);
+  assert.match(html, /<td>3\/2<\/td>/);
   assert.match(html, /2 wood \/ 4 worker-hours/);
-  assert.match(html, /kitchen/);
-  assert.match(html, /4 food \/ day/);
+  assert.match(html, /production/);
+  assert.match(html, /hired workers/);
+  assert.match(html, /upkeep 5 coin\/day \/ production x1/);
+});
+
+test("renderPopulationJobs preserves focused workshop recipe select", () => {
+  const activeSelect = {
+    matches: (selector) => selector === "[data-workshop-recipe-slot]"
+  };
+  const slotClassState = new Set(["workshop-slot", "unmanned"]);
+  const slotEl = {
+    classList: {
+      toggle(name, enabled) {
+        if (enabled) slotClassState.add(name);
+        else slotClassState.delete(name);
+      }
+    }
+  };
+  const slotStateEl = { textContent: "" };
+  const recipeNameEl = { innerHTML: "" };
+  const meterEl = { style: { width: "0%" } };
+  const detailEl = { textContent: "" };
+  const queryMap = {
+    '[data-workshop-slot="0"]': slotEl,
+    '[data-workshop-slot-state="0"]': slotStateEl,
+    '[data-workshop-slot-recipe-name="0"]': recipeNameEl,
+    '[data-workshop-slot-meter="0"]': meterEl,
+    '[data-workshop-slot-detail="0"]': detailEl
+  };
+  const el = {
+    jobRows: {
+      innerHTML: "",
+      querySelectorAll: () => []
+    },
+    workshopStatus: {
+      textContent: ""
+    },
+    workshopSlots: {
+      innerHTML: "stable slots",
+      ownerDocument: {
+        activeElement: activeSelect
+      },
+      contains: (element) => element === activeSelect,
+      querySelector: (selector) => queryMap[selector] || null,
+      querySelectorAll: () => []
+    },
+    workshopResearch: {
+      innerHTML: ""
+    },
+    workshopUpgradeGraph: {
+      innerHTML: "",
+      querySelectorAll: () => []
+    }
+  };
+  renderPopulationJobs(el, {
+    state: {
+      tavern: { jobs: { wood: 1, ore: 0, workshop: 1, research: 0 } },
+      settlement: { availableWorkers: 3, hiredWorkers: 3, happiness: 80, wagePerWorker: 1 },
+      workshop: {
+        slots: [{ recipeId: "planks", progress: 0 }],
+        recipeXp: {},
+        researchProgress: 0,
+        progression: { points: {}, availablePoints: 0 }
+      }
+    },
+    workSites: [{ id: "wood", name: "North Woodlot", output: { wood: 2 }, cycleHours: 4 }],
+    blueprints: {}
+  });
+
+  assert.equal(el.workshopSlots.innerHTML, "stable slots");
+  assert.equal(slotStateEl.textContent, "manned");
+  assert.match(recipeNameEl.innerHTML, /Target: Planks L1/);
+  assert.match(recipeNameEl.innerHTML, /recipe-hover/);
+  assert.match(recipeNameEl.innerHTML, /recipe-xp-panel/);
+  assert.equal(meterEl.style.width, "0%");
+  assert.match(detailEl.textContent, /0\/8 work/);
+  assert.equal(slotClassState.has("manned"), true);
+  assert.equal(slotClassState.has("unmanned"), false);
+  assert.match(el.jobRows.innerHTML, /North Woodlot/);
+  assert.match(el.workshopResearch.innerHTML, /Research/);
+});
+
+test("renderPopulationJobs renders recipe XP hover panel", () => {
+  const el = {
+    jobRows: {
+      innerHTML: "",
+      querySelectorAll: () => []
+    },
+    workshopStatus: {
+      textContent: ""
+    },
+    workshopSlots: {
+      innerHTML: "",
+      ownerDocument: {
+        activeElement: null
+      },
+      contains: () => false,
+      querySelectorAll: () => []
+    },
+    workshopResearch: {
+      innerHTML: ""
+    },
+    workshopUpgradeGraph: {
+      innerHTML: "",
+      querySelectorAll: () => []
+    }
+  };
+  renderPopulationJobs(el, {
+    state: {
+      tavern: { jobs: { wood: 0, ore: 0, workshop: 1, research: 0 } },
+      settlement: { availableWorkers: 3, hiredWorkers: 3, wagePerWorker: 1 },
+      workshop: {
+        slots: [{ recipeId: "planks", progress: 0 }],
+        recipeXp: { planks: 36 },
+        researchProgress: 0,
+        progression: { points: {}, availablePoints: 0 }
+      }
+    },
+    workSites: [],
+    blueprints: {}
+  });
+
+  assert.match(el.workshopSlots.innerHTML, /recipe-xp-panel/);
+  assert.match(el.workshopSlots.innerHTML, /Planks L7/);
+  assert.match(el.workshopSlots.innerHTML, /XP 36/);
+  assert.match(el.workshopSlots.innerHTML, /Reduced Cost/);
+  assert.match(el.workshopSlots.innerHTML, /Batch Cutting/);
+  assert.match(el.workshopSlots.innerHTML, /Measured Cuts/);
+  assert.match(el.workshopSlots.innerHTML, /Cost: 2 wood/);
+  assert.match(el.workshopSlots.innerHTML, /Output: 2 planks/);
 });
 
 test("visitorQueueHtml renders unrecruited visitors with portrait callback", () => {
   const html = visitorQueueHtml({
+    state: {
+      day: 3,
+      tavernVisitors: {
+        visitors: {
+          visitor_1: { state: "present", nextChangeDay: 8 }
+        }
+      }
+    },
     visitors: [
       {
         id: "founder",
@@ -186,11 +361,123 @@ test("visitorQueueHtml renders unrecruited visitors with portrait callback", () 
   assert.doesNotMatch(html, /Already Here/);
   assert.match(html, /Dani/);
   assert.match(html, /Half_elf \/ scout/);
+  assert.match(html, /tier 0 \/ fame 0 \/ 5d left/);
   assert.match(html, /cost: 5 coin, 2 food/);
+  assert.match(html, /data-visitor-info="visitor_1"/);
   assert.match(html, /visitor_1:card/);
 });
 
-test("visitorQueueHtml reports when all prototype visitors are recruited", () => {
+test("tavernUpgradeButtonHtml renders current effect and next cost", () => {
+  const html = tavernUpgradeButtonHtml({
+    state: {
+      blueprints: {},
+      tavern: {
+        capacity: 3,
+        population: 0,
+        visitorSeats: 3
+      }
+    },
+    blueprints: {
+      bunkRoom: {
+        cost: { wood: 20, ore: 8 }
+      }
+    }
+  });
+
+  assert.match(html, /upgrade tavern/);
+  assert.match(html, /Tavern Level 1/);
+  assert.match(html, /Current effect: adventurer capacity 3, worker population 0, visitor seats 3/);
+  assert.match(html, /Next effect: \+1 adventurer capacity, \+1 worker population/);
+  assert.match(html, /Upgrade cost: 10 wood, 4 ore/);
+  assert.match(html, /common room/);
+});
+
+test("tavernUpgradeButtonHtml uses bunk room upgrade when unlocked", () => {
+  const html = tavernUpgradeButtonHtml({
+    state: {
+      blueprints: { bunkRoom: true },
+      tavern: {
+        capacity: 5,
+        population: 2,
+        visitorSeats: 3
+      }
+    },
+    blueprints: {
+      bunkRoom: {
+        cost: { wood: 20, ore: 8 }
+      }
+    }
+  });
+
+  assert.match(html, /Tavern Level 3/);
+  assert.match(html, /Next effect: \+2 adventurer capacity, \+1 worker population/);
+  assert.match(html, /Upgrade cost: 20 wood, 8 ore/);
+  assert.match(html, /Bunk plans/);
+});
+
+test("visitorDetailHtml renders selected visitor info and read-only skills", () => {
+  const html = visitorDetailHtml({
+    visitor: {
+      id: "visitor_1",
+      name: "Dani",
+      race: "half_elf",
+      role: "scout",
+      cost: { coin: 5, food: 2 },
+      availabilityTier: 1,
+      fameThreshold: 3,
+      stayDays: 4
+    },
+    state: {
+      day: 4,
+      tavernVisitors: {
+        visitors: {
+          visitor_1: { state: "present", nextChangeDay: 9 }
+        }
+      }
+    },
+    hero: {
+      id: "visitor_1",
+      name: "Dani",
+      race: "half_elf",
+      role: "scout",
+      primaryJob: "scout",
+      secondaryJob: null,
+      level: 1,
+      xp: 0,
+      skillPoints: 1,
+      hp: 9,
+      learnedSkills: {},
+      spriteIndex: 2
+    },
+    stats: {
+      hpMax: 9,
+      atk: 3,
+      def: 1,
+      utility: 4,
+      resolve: 10,
+      travelSpeed: 0,
+      recoveryReduce: 0,
+      foodCostReduce: 0
+    },
+    atlas: { columns: 7, rows: 7 },
+    activeTab: "skill1",
+    availableSkillTreeIds: () => ["half_elf"],
+    skillTrees: { half_elf: { name: "Half Elf", skillIds: ["root"] } },
+    skills: { root: { name: "Root", category: "utility", maxRank: 1, requires: [], effects: [] } },
+    skillRank: () => 0,
+    canLearnSkill: () => ({ ok: false, reason: "hire first" })
+  });
+
+  assert.match(html, /detail-title">Dani/);
+  assert.match(html, /hire cost: 5 coin, 2 food/);
+  assert.match(html, /5d left/);
+  assert.match(html, /data-tavern-detail-panel="info"/);
+  assert.match(html, /data-tavern-detail-panel="skill1"/);
+  assert.match(html, /skill-tree-title">Half Elf/);
+  assert.match(html, /hire first/);
+});
+
+test("visitorQueueHtml reports when no visitors are waiting", () => {
   const html = visitorQueueHtml({
     visitors: [
       {
@@ -206,7 +493,7 @@ test("visitorQueueHtml reports when all prototype visitors are recruited", () =>
     portraitHtml: () => ""
   });
 
-  assert.match(html, /no visitors left/);
+  assert.match(html, /no visitors waiting today/);
 });
 
 test("dungeonNodeMapHtml marks reached and failed nodes", () => {
@@ -225,6 +512,38 @@ test("dungeonNodeMapHtml marks reached and failed nodes", () => {
   assert.match(html, /1\. Gate/);
   assert.match(html, /class="node reached/);
   assert.match(html, /2\. Cellar/);
+  assert.match(html, /failed/);
+});
+
+test("dungeonNodeGraphHtml renders branching route targets", () => {
+  const html = dungeonNodeGraphHtml({
+    dungeon: {
+      routes: [
+        { id: "main", name: "Main", default: true, nodeIds: ["entry", "rats", "boss"] },
+        { id: "crawl", name: "Smuggler Crawl", nodeIds: ["entry", "smuggler", "cache"] }
+      ],
+      nodes: [
+        { id: "entry", name: "Entry", type: "hazard", resolveCost: 2, reward: {} },
+        { id: "rats", name: "Rat Pack", type: "combat", resolveCost: 3, reward: {} },
+        { id: "boss", name: "Boss", type: "boss", resolveCost: 5, reward: {} },
+        { id: "smuggler", name: "Smuggler Crawl", type: "check", resolveCost: 3, reward: {} },
+        { id: "cache", name: "Cache", type: "check", resolveCost: 2, reward: {} }
+      ]
+    },
+    selectedTargetNodeId: "smuggler",
+    estimate: {
+      routeNodeIds: ["entry", "smuggler"],
+      reached: 1,
+      success: false
+    },
+    rewardText: () => "none"
+  });
+
+  assert.match(html, /dungeon-route-graph/);
+  assert.match(html, /Smuggler Crawl/);
+  assert.match(html, /data-dungeon-target-node="smuggler"/);
+  assert.match(html, /selected/);
+  assert.match(html, /dungeon-route-link in-path/);
   assert.match(html, /failed/);
 });
 
@@ -341,6 +660,36 @@ test("locationDetailHtml renders work-site details", () => {
   assert.match(html, /assigned workers: 3/);
 });
 
+test("locationDetailHtml renders work-site upgrade controls", () => {
+  const html = locationDetailHtml({
+    location: {
+      id: "wood",
+      name: "North Woodlot",
+      type: "work",
+      coord: { x: 120, y: 240 },
+      description: "trees and paths",
+      output: { wood: 2 }
+    },
+    party: { name: "Alpha", memberIds: [] },
+    partyReady: { canQueue: true, message: "ready" },
+    tavernCoord: { x: 100, y: 200 },
+    distanceText: () => "44.7",
+    rewardText: () => "2 wood",
+    heroName: () => "",
+    assignedWorkers: 3,
+    workSiteUpgrade: {
+      level: 1,
+      maxWorkers: 4,
+      costText: "400 wood, 100 coin"
+    }
+  });
+
+  assert.match(html, /upgrade: level 1/);
+  assert.match(html, /workplaces: 3\/4/);
+  assert.match(html, /next upgrade: 400 wood, 100 coin/);
+  assert.match(html, /data-upgrade-work-site="wood"/);
+});
+
 test("locationDetailHtml renders dungeon assignment state", () => {
   const html = locationDetailHtml({
     location: {
@@ -363,8 +712,8 @@ test("locationDetailHtml renders dungeon assignment state", () => {
   assert.match(html, /poi-title-image/);
   assert.match(html, /selected party: Alpha \(Dani\)/);
   assert.match(html, /party readiness: party must be healed/);
-  assert.match(html, /assign repeated route/);
-  assert.match(html, /disabled/);
+  assert.match(html, /click dungeon on map to run/);
+  assert.doesNotMatch(html, /assign repeated route/);
 });
 
 test("operationRowsHtml renders active and paused repeated operations", () => {
@@ -452,6 +801,7 @@ test("mapWorldHtml renders routes, POIs, and actor layer", () => {
   const html = mapWorldHtml({
     tavernCoord: { x: 100, y: 100 },
     selectedLocationId: "mine",
+    mapWorld: { width: 2048, height: 1536, backgroundImage: "assets/map-bg.png" },
     poi: [
       { id: "tavern", name: "Tavern", type: "tavern", coord: { x: 100, y: 100 } },
       { id: "mine", name: "Mine", type: "work", coord: { x: 200, y: 100 } }
@@ -459,9 +809,28 @@ test("mapWorldHtml renders routes, POIs, and actor layer", () => {
   });
 
   assert.match(html, /id="mapWorld"/);
+  assert.match(html, /--map-world-height:1536px/);
   assert.match(html, /class="map-route"/);
   assert.match(html, /data-location-id="mine"/);
   assert.match(html, /id="mapActors"/);
+});
+
+test("mapWorldHtml renders dungeon context menu", () => {
+  const html = mapWorldHtml({
+    tavernCoord: { x: 100, y: 100 },
+    selectedLocationId: "cellar",
+    mapWorld: { width: 2048, height: 1536, backgroundImage: "assets/map-bg.png" },
+    contextMenu: { locationId: "cellar", x: 44, y: 55 },
+    poi: [
+      { id: "tavern", name: "Tavern", type: "tavern", coord: { x: 100, y: 100 } },
+      { id: "cellar", name: "Rat Cellar", type: "dungeon", coord: { x: 200, y: 100 } }
+    ]
+  });
+
+  assert.match(html, /class="map-context-menu"/);
+  assert.match(html, /left:44px;top:55px/);
+  assert.match(html, /data-map-context-action="run"/);
+  assert.match(html, /data-map-context-action="cancel"/);
 });
 
 test("workerActorHtml renders only assigned workers", () => {
@@ -602,7 +971,16 @@ test("skillButtonHtml and skillTreesHtml render learnable skill state", () => {
       name: "Root",
       category: "fight",
       maxRank: 3,
-      requires: []
+      requires: [],
+      effects: [{ type: "atk_add", valuePerRank: 2 }]
+    },
+    child: {
+      name: "Child",
+      category: "utility",
+      maxRank: 1,
+      requires: ["root"],
+      effects: [{ type: "utility_add", valuePerRank: 1 }],
+      costPerRank: 2
     }
   };
 
@@ -617,6 +995,9 @@ test("skillButtonHtml and skillTreesHtml render learnable skill state", () => {
   assert.match(button, /skill-node learned/);
   assert.match(button, /data-learn-skill="root"/);
   assert.match(button, /fight 1\/3/);
+  assert.match(button, /skill-detail-panel/);
+  assert.match(button, /Attack/);
+  assert.match(button, /\+2 -> \+4/);
 
   const tree = skillTreesHtml({
     hero,
@@ -624,7 +1005,7 @@ test("skillButtonHtml and skillTreesHtml render learnable skill state", () => {
     skillTrees: {
       human: {
         name: "Human",
-        skillIds: ["root"]
+        skillIds: ["root", "child"]
       }
     },
     skills,
@@ -634,6 +1015,41 @@ test("skillButtonHtml and skillTreesHtml render learnable skill state", () => {
 
   assert.match(tree, /skill-tree-title">Human/);
   assert.match(tree, /disabled/);
+  assert.match(tree, /skill-detail-panel/);
+  assert.match(tree, /Cost: 2 skill points/);
+  assert.match(tree, /State: blocked/);
+});
+
+test("progressionGraphHtml marks right-side node details to open left", () => {
+  const html = progressionGraphHtml({
+    graph: {
+      nodes: {
+        left: {
+          id: "left",
+          name: "Left",
+          category: "utility",
+          maxRank: 1,
+          x: 0,
+          y: 0
+        },
+        right: {
+          id: "right",
+          name: "Right",
+          category: "utility",
+          maxRank: 1,
+          x: 1,
+          y: 0
+        }
+      },
+      links: [{ from: "left", to: "right" }]
+    },
+    state: { points: {} },
+    canSpendNode: () => ({ ok: true, reason: "available" }),
+    nodeDetailHtml: () => '<span class="skill-detail-panel">Detail</span>'
+  });
+
+  assert.match(html, /progression-node-wrap detail-left/);
+  assert.match(html, /left:88%;top:12%;/);
 });
 
 test("rosterCardsHtml renders detailed and minimized character cards", () => {
@@ -723,8 +1139,12 @@ test("focusedCharacterHtml renders selected character detail and add-party state
   });
 
   assert.match(html, /detail-title">Dani/);
+  assert.match(html, /data-roster-detail-panel="info"/);
+  assert.match(html, /data-roster-detail-panel="skill1"/);
+  assert.match(html, /data-roster-detail-panel="skill2"/);
   assert.match(html, /level: 2 \(5\/16 xp\)/);
   assert.match(html, /gear: Iron Blade/);
+  assert.match(html, /craft iron blade/);
   assert.match(html, /add to current party/);
   assert.doesNotMatch(html, /addFocusedToPartyBtn" disabled/);
 });

@@ -1,5 +1,7 @@
 import {
-  dungeonEstimateText,
+  dungeonEstimateHtml,
+  dungeonNodeGraphHtml,
+  dungeonNodeInfoHtml,
   dungeonNodeMapHtml,
   replayActorRowsHtml
 } from "./dungeonView.js";
@@ -15,18 +17,35 @@ export function renderDungeonPanel({
   rewardText,
   replay,
   replaySpeedLabel,
-  portraitStyle
+  portraitStyle,
+  selectedTargetNodeId,
+  plannedNodeIds = [],
+  conquestState = {},
+  onSelectTargetNode
 }) {
   const reached = estimate && estimate.dungeonId === dungeon.id ? estimate.reached : 0;
   const failedIndex = estimate && !estimate.success ? estimate.reached : -1;
-  el.nodeMap.innerHTML = dungeonNodeMapHtml({
+  el.nodeMap.innerHTML = dungeonNodeGraphHtml({
     dungeon,
-    reached,
-    failedIndex,
+    selectedTargetNodeId,
+    plannedNodeIds,
+    conquestState,
+    estimate: estimate && estimate.dungeonId === dungeon.id ? estimate : null,
     rewardText
   });
+  el.dungeonNodeInfo.innerHTML = dungeonNodeInfoHtml({
+    dungeon,
+    nodeId: selectedTargetNodeId || plannedNodeIds.at(-1),
+    conquestState,
+    rewardText
+  });
+  el.nodeMap.onclick = (event) => {
+    const button = event.target.closest?.("[data-dungeon-target-node]");
+    if (!button || !el.nodeMap.contains?.(button)) return;
+    onSelectTargetNode?.(button.dataset.dungeonTargetNode);
+  };
 
-  el.estimateBox.textContent = dungeonEstimateText({
+  el.estimateBox.innerHTML = dungeonEstimateHtml({
     estimate: estimate ? {
       ...estimate,
       rewardText: rewardText(estimate.rewards)

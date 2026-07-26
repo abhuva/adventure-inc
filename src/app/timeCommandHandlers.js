@@ -1,12 +1,16 @@
 import {
   autoTimeToggleMessage,
-  dailyTavernIncomeMessage,
+  settlementUpkeepMessage,
   timeAdvancedMessage,
-  workerDeliveryMessage
+  workerDeliveryMessage,
+  workshopBlockedMessage,
+  workshopCraftedMessage,
+  workshopResearchMessage
 } from "./commandMessages.js";
 import { advancePartyOperations } from "../game/dungeon/operationRuntime.js";
 import { applyDailyProduction } from "../game/time/dailyProductionRuntime.js";
 import { advanceGameHours } from "../game/time/timeAdvanceRuntime.js";
+import { workerProductionMultiplier } from "../game/settlement/workforceModel.js";
 
 export function createTimeCommandHandlers({
   state,
@@ -19,8 +23,13 @@ export function createTimeCommandHandlers({
   formatReward,
   advanceClock,
   advanceWorkerCyclesForSites,
+  advanceWorkshopProduction,
+  advanceWorkshopResearch,
+  applyDailySettlementUpkeep,
+  refreshTavernVisitors,
   addLog,
-  render
+  render,
+  renderTimeTick = render
 }) {
   function logMessage(message) {
     if (!message) return;
@@ -44,6 +53,7 @@ export function createTimeCommandHandlers({
       jobs: state.tavern.jobs,
       workSites: workSites(),
       hours,
+      productionMultiplier: workerProductionMultiplier(state),
       applyOutput: (output, site) => {
         applyRewards(output);
         logMessage(workerDeliveryMessage(site.name, formatReward(output)));
@@ -53,18 +63,40 @@ export function createTimeCommandHandlers({
 
   function produceDailyResources(report) {
     const result = applyDailyProduction({ state });
-    if (report) {
-      logMessage(dailyTavernIncomeMessage(result.income));
+    if (applyDailySettlementUpkeep) {
+      const upkeep = applyDailySettlementUpkeep(state);
+      if (report || upkeep.comfortMissing > 0 || upkeep.wageMissing > 0) {
+        logMessage(settlementUpkeepMessage(upkeep));
+      }
     }
+    refreshTavernVisitors?.();
     result.repeatedPartyIds.forEach((partyId) => ensureRepeatedPlanQueued(partyId));
   }
 
+  function advanceWorkshop(hours) {
+    if (!advanceWorkshopProduction || !advanceWorkshopResearch) return;
+    const events = advanceWorkshopProduction(state, hours);
+    events.forEach((event) => {
+      if (event.type === "crafted") {
+        logMessage(workshopCraftedMessage(event, formatReward(event.output)));
+      }
+      if (event.type === "blocked") {
+        logMessage(workshopBlockedMessage(event));
+      }
+    });
+    const research = advanceWorkshopResearch(state, hours);
+    if (research.pointsGained > 0) {
+      logMessage(workshopResearchMessage(research.pointsGained));
+    }
+  }
+
   function advanceTime(hours, report) {
-    advanceGameHours({
+    const rollovers = advanceGameHours({
       state,
       hours,
       onBeforeHour: () => {
         advanceWorkerCycles(1);
+        advanceWorkshop(1);
         advanceOperations(1);
       },
       onDayRollover: () => produceDailyResources(report),
@@ -74,7 +106,13 @@ export function createTimeCommandHandlers({
       logMessage(timeAdvancedMessage(hours));
     }
     autoTimeRuntime.markTick(state);
-    render();
+    if (report) {
+      render();
+    } else {
+      renderTimeTick(state.activeTab, autoTimeRuntime.currentVisualHourFraction(state), {
+        dayRolledOver: rollovers.length > 0
+      });
+    }
   }
 
   return {
@@ -91,6 +129,15 @@ export function createTimeCommandHandlers({
 
     stopAutoTime() {
       autoTimeRuntime.stop(state);
+    },
+
+    enableAutoTime() {
+      const result = autoTimeRuntime.start(state, () => advanceTime(1, false));
+      if (result === "started") {
+        logMessage(autoTimeToggleMessage(result));
+      }
+      render();
+      return result;
     },
 
     currentVisualHourFraction() {

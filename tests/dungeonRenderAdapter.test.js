@@ -31,6 +31,7 @@ function createHarness() {
     },
     el: {
       nodeMap: element(),
+      dungeonNodeInfo: element(),
       estimateBox: element(),
       replayTimelineSlider: element(),
       replayStatus: element(),
@@ -93,20 +94,23 @@ test("dungeon render adapter renders selected dungeon with app state and control
     selectedDungeon: () => ({
       id: "rat_cellar",
       nodes: [
-        { name: "Entry", type: "combat", reward: { coin: 2 } }
+        { id: "entry", name: "Entry", type: "combat", reward: { coin: 2 } }
       ]
     }),
     repeatMode: () => "repeated",
     formatReward: (reward) => Object.entries(reward).map(([key, value]) => `${value} ${key}`).join(", ") || "none",
     replaySpeedLabel: () => "1x",
-    portraitStyle: () => "background-position:0% 0%"
+    portraitStyle: () => "background-position:0% 0%",
+    selectedTargetNodeId: () => "entry"
   });
 
   adapter.renderDungeon();
 
   assert.match(el.nodeMap.innerHTML, /Entry/);
-  assert.match(el.estimateBox.textContent, /Rat Cellar \/ safe/);
-  assert.match(el.estimateBox.textContent, /repeat: repeated/);
+  assert.match(el.dungeonNodeInfo.innerHTML, /Entry/);
+  assert.match(el.estimateBox.innerHTML, /Rat Cellar/);
+  assert.match(el.estimateBox.innerHTML, /safe/);
+  assert.match(el.estimateBox.innerHTML, /repeated route/);
   assert.match(el.replayStatus.textContent, /event 1\/1/);
   assert.match(el.replayPartyActors.innerHTML, /Dani/);
 });

@@ -26,3 +26,43 @@ export function setMapSideTabActive(documentRef, tabId) {
     panelDatasetKey: "mapSidePanel"
   });
 }
+
+export function setDungeonLocalTabActive(documentRef, tabId) {
+  setActiveByDataset({
+    buttons: documentRef.querySelectorAll("[data-dungeon-local-tab]"),
+    panels: documentRef.querySelectorAll("[data-dungeon-local-panel]"),
+    activeId: tabId,
+    buttonDatasetKey: "dungeonLocalTab",
+    panelDatasetKey: "dungeonLocalPanel"
+  });
+}
+
+export function setPopulationLocalTabActive(documentRef, tabId) {
+  setActiveByDataset({
+    buttons: documentRef.querySelectorAll("[data-population-local-tab]"),
+    panels: documentRef.querySelectorAll("[data-population-local-panel]"),
+    activeId: tabId,
+    buttonDatasetKey: "populationLocalTab",
+    panelDatasetKey: "populationLocalPanel"
+  });
+}
+
+export function setRosterDetailTabActive(documentRef, tabId) {
+  setActiveByDataset({
+    buttons: documentRef.querySelectorAll("[data-roster-detail-tab]"),
+    panels: documentRef.querySelectorAll("[data-roster-detail-panel]"),
+    activeId: tabId,
+    buttonDatasetKey: "rosterDetailTab",
+    panelDatasetKey: "rosterDetailPanel"
+  });
+}
+
+export function setTavernDetailTabActive(documentRef, tabId) {
+  setActiveByDataset({
+    buttons: documentRef.querySelectorAll("[data-tavern-detail-tab]"),
+    panels: documentRef.querySelectorAll("[data-tavern-detail-panel]"),
+    activeId: tabId,
+    buttonDatasetKey: "tavernDetailTab",
+    panelDatasetKey: "tavernDetailPanel"
+  });
+}

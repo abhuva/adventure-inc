@@ -4,14 +4,10 @@ import test from "node:test";
 import { renderRosterPanel } from "../src/ui/rosterPanel.js";
 
 function fakeButton(heroId) {
-  const listeners = {};
   return {
     dataset: { focus: heroId },
-    addEventListener(type, callback) {
-      listeners[type] = callback;
-    },
-    click() {
-      listeners.click?.();
+    closest(selector) {
+      return selector === "[data-focus]" ? this : null;
     }
   };
 }
@@ -31,6 +27,9 @@ function fakeRosterRows(buttons) {
     },
     querySelectorAll(selector) {
       return selector === "[data-focus]" ? buttons : [];
+    },
+    contains(element) {
+      return buttons.includes(element);
     }
   };
 }
@@ -61,6 +60,6 @@ test("renderRosterPanel renders cards and binds focus buttons", () => {
   assert.match(el.rosterRows.innerHTML, /Ada/);
   assert.match(el.rosterRows.innerHTML, /Ben/);
 
-  benButton.click();
+  el.rosterRows.onclick({ target: benButton });
   assert.deepEqual(focused, ["ben"]);
 });

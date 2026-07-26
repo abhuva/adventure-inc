@@ -39,6 +39,7 @@ function createDocumentRef() {
 function createDungeonElements() {
   return {
     nodeMap: createElement(),
+    dungeonNodeInfo: createElement(),
     estimateBox: createElement(),
     replayTimelineSlider: createElement(),
     replayStatus: createElement(),
@@ -53,15 +54,24 @@ function createDungeonElements() {
 test("renderDungeonPanel renders nodes, estimate, and replay", () => {
   const el = createDungeonElements();
   const documentRef = createDocumentRef();
+  const calls = [];
+  const targetButton = {
+    dataset: { dungeonTargetNode: "den" },
+    closest(selector) {
+      return selector === "[data-dungeon-target-node]" ? this : null;
+    }
+  };
+  el.nodeMap.contains = (element) => element === targetButton;
 
   renderDungeonPanel({
     el,
     documentRef,
     dungeon: {
       id: "rat_cellar",
+      routes: [{ id: "main", name: "Main", default: true, nodeIds: ["gate", "den"] }],
       nodes: [
-        { name: "Gate", type: "combat", reward: { coin: 1 } },
-        { name: "Den", type: "combat", reward: { hide: 1 } }
+        { id: "gate", name: "Gate", type: "combat", reward: { coin: 1 } },
+        { id: "den", name: "Den", type: "combat", reward: { hide: 1 } }
       ]
     },
     estimate: {
@@ -70,6 +80,7 @@ test("renderDungeonPanel renders nodes, estimate, and replay", () => {
       strategy: "balanced",
       partyId: "party_alpha",
       partyName: "Alpha",
+      routeNodeIds: ["gate", "den"],
       totalNodes: 2,
       reached: 1,
       success: false,
@@ -105,13 +116,22 @@ test("renderDungeonPanel renders nodes, estimate, and replay", () => {
       ]
     },
     replaySpeedLabel: () => "1x",
-    portraitStyle: () => "background-position:0% 0%"
+    portraitStyle: () => "background-position:0% 0%",
+    selectedTargetNodeId: "den",
+    onSelectTargetNode: (nodeId) => calls.push(nodeId)
   });
 
   assert.match(el.nodeMap.innerHTML, /Gate/);
+  assert.match(el.nodeMap.innerHTML, /data-dungeon-target-node="den"/);
+  assert.match(el.nodeMap.innerHTML, /selected/);
   assert.match(el.nodeMap.innerHTML, /failed/);
-  assert.match(el.estimateBox.textContent, /Rat Cellar \/ balanced/);
-  assert.match(el.estimateBox.textContent, /repeat: repeated/);
+  assert.match(el.dungeonNodeInfo.innerHTML, /Den/);
+  el.nodeMap.onclick({ target: targetButton });
+  assert.deepEqual(calls, ["den"]);
+  assert.match(el.estimateBox.innerHTML, /Rat Cellar/);
+  assert.match(el.estimateBox.innerHTML, /balanced/);
+  assert.match(el.estimateBox.innerHTML, /repeated route/);
+  assert.match(el.estimateBox.innerHTML, /time \/ combat log/);
   assert.match(el.replayStatus.textContent, /event 1\/1/);
   assert.match(el.replayPartyActors.innerHTML, /Dani/);
   assert.match(el.replayEnemyActors.innerHTML, /RA/);

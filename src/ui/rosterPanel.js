@@ -18,7 +18,9 @@ export function renderRosterPanel({
     characterState,
     atlas
   });
-  el.rosterRows.querySelectorAll("[data-focus]").forEach((button) => {
-    button.addEventListener("click", () => onFocusHero(button.dataset.focus));
-  });
+  el.rosterRows.onclick = (event) => {
+    const button = event.target.closest?.("[data-focus]");
+    if (!button || !el.rosterRows.contains?.(button)) return;
+    onFocusHero(button.dataset.focus);
+  };
 }

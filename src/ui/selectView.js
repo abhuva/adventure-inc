@@ -1,8 +1,18 @@
+import { dungeonRoutes } from "../game/dungeon/dungeonGraphModel.js";
+
 export function dungeonOptionsHtml(dungeons = []) {
   return dungeons.map((dungeon) => `<option value="${dungeon.id}">${dungeon.name}</option>`).join("");
 }
 
 export function stopNodeOptionsHtml(dungeon) {
+  const routes = dungeonRoutes(dungeon);
+  if (dungeon?.routes?.length) {
+    return [
+      `<option value="all">full route</option>`,
+      ...routes.map((route) => `<option value="route:${route.id}">${route.name}</option>`),
+      ...(dungeon?.nodes || []).map((node) => `<option value="node:${node.id}">target: ${node.name}</option>`)
+    ].join("");
+  }
   return [
     `<option value="all">full run</option>`,
     ...(dungeon?.nodes || []).map((node, index) => `<option value="${index}">${index + 1}: ${node.name}</option>`)

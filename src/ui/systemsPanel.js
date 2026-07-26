@@ -1,7 +1,5 @@
 import { renderBlueprintRows } from "./blueprintView.js";
-import { renderLogRows } from "./logView.js";
 
-export function renderSystemsPanel({ el, blueprints, unlockedBlueprints, logEntries }) {
+export function renderSystemsPanel({ el, blueprints, unlockedBlueprints }) {
   renderBlueprintRows(el, blueprints, unlockedBlueprints);
-  renderLogRows(el, logEntries);
 }

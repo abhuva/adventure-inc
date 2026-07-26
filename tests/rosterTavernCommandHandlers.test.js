@@ -17,10 +17,17 @@ function createHarness(overrides = {}) {
     },
     tavern: {
       capacity: 3,
+      visitorSeats: 3,
       population: 2,
       jobs: {
         wood: 1,
         ore: 1
+      }
+    },
+    tavernVisitors: {
+      refreshedDay: 1,
+      visitors: {
+        visitor_1: { state: "present", nextChangeDay: 3 }
       }
     },
     roster: [
@@ -104,12 +111,33 @@ test("roster/tavern handlers toggle view and craft gear", () => {
   assert.deepEqual(calls, ["render", "render"]);
 });
 
+test("roster/tavern handlers select tavern visitor info", () => {
+  const { state, calls, handlers } = createHarness({
+    state: {
+      selectedTavernVisitorId: null,
+      activeTavernDetailTab: "skill1"
+    }
+  });
+
+  handlers.selectTavernVisitor("visitor_1");
+
+  assert.equal(state.selectedTavernVisitorId, "visitor_1");
+  assert.equal(state.activeTavernDetailTab, "info");
+  assert.deepEqual(calls, ["render"]);
+});
+
 test("roster/tavern handlers upgrade tavern and assign workers", () => {
   const { state, logs, handlers } = createHarness({
     state: {
       blueprints: {
         ironBlade: true,
         bunkRoom: true
+      },
+      settlement: {
+        wagePerWorker: 2,
+        happiness: 80,
+        availableWorkers: 3,
+        hiredWorkers: 3
       }
     }
   });
@@ -121,6 +149,60 @@ test("roster/tavern handlers upgrade tavern and assign workers", () => {
 
   handlers.assignWorker("wood");
   assert.equal(state.tavern.jobs.wood, 2);
-  assert.equal(state.tavern.jobs.ore, 0);
-  assert.match(logs[1].text, /worker moved from ore to wood/);
+  assert.equal(state.tavern.jobs.ore, 1);
+  assert.match(logs[1].text, /worker assigned to wood/);
+});
+
+test("roster/tavern handlers allow workshop workers beyond station count as assistants", () => {
+  const { state, logs, handlers } = createHarness({
+    state: {
+      tavern: {
+        capacity: 3,
+        population: 2,
+        fame: 20,
+        jobs: { wood: 0, ore: 0, workshop: 1, research: 0 }
+      },
+      settlement: {
+        wagePerWorker: 1,
+        happiness: 100,
+        availableWorkers: 5,
+        hiredWorkers: 5
+      },
+      workshop: {
+        slots: [{ recipeId: "planks", progress: 0 }],
+        recipeXp: {},
+        researchProgress: 0,
+        progression: { points: {}, availablePoints: 0 }
+      }
+    }
+  });
+
+  handlers.adjustWorker("workshop", 1);
+
+  assert.equal(state.tavern.jobs.workshop, 2);
+  assert.match(logs[0].text, /worker added to workshop/);
+});
+
+test("roster/tavern handlers report fixed worker upkeep", () => {
+  const { state, logs, handlers } = createHarness({
+    state: {
+      tavern: {
+        capacity: 3,
+        population: 2,
+        fame: 20,
+        jobs: { wood: 1, ore: 1, workshop: 0, research: 0 }
+      },
+      settlement: {
+        wagePerWorker: 1,
+        happiness: 100,
+        availableWorkers: 5,
+        hiredWorkers: 5
+      }
+    }
+  });
+
+  handlers.adjustWage(1);
+
+  assert.equal(state.settlement.wagePerWorker, 1);
+  assert.match(logs[0].text, /worker upkeep is fixed/);
 });

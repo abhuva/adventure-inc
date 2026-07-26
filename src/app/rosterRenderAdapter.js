@@ -6,6 +6,8 @@ import {
   portraitStyle
 } from "../ui/rosterView.js";
 import { renderVisitorQueue } from "../ui/tavernView.js";
+import { createHeroFromVisitor } from "../game/roster/rosterCommands.js";
+import { tavernVisitorsForDay } from "../game/roster/visitorQueue.js";
 
 export function createRosterRenderAdapter({
   state,
@@ -33,7 +35,14 @@ export function createRosterRenderAdapter({
   onCancelParty,
   onTogglePartyMember,
   onAddFocusedToParty,
+  onCraft,
   onLearnSkill,
+  onAdjustWorker,
+  onAdjustWage,
+  onSetWorkshopRecipe,
+  onSetWorkshopAutoInputs,
+  onSpendWorkshopUpgradePoint,
+  onSelectTavernVisitor,
   onFocusHero
 }) {
   function renderPortrait(hero, sizeClass) {
@@ -45,18 +54,51 @@ export function createRosterRenderAdapter({
   }
 
   function renderVisitors() {
+    const visibleVisitors = tavernVisitorsForDay(state, visitors);
+    const recruitedIds = new Set(state.roster.map((hero) => hero.id));
+    const availableVisitors = visibleVisitors.filter((visitor) => !recruitedIds.has(visitor.id)).slice(0, 3);
+    const selectedVisitor = availableVisitors.find((visitor) => visitor.id === state.selectedTavernVisitorId)
+      || availableVisitors[0]
+      || null;
+    state.selectedTavernVisitorId = selectedVisitor?.id || null;
+    const selectedHero = selectedVisitor ? createHeroFromVisitor(selectedVisitor) : null;
     renderVisitorQueue(el, {
-      visitors,
+      documentRef,
+      state,
+      blueprints,
+      visitors: visibleVisitors,
       roster: state.roster,
+      tavern: state.tavern,
+      selectedVisitorId: state.selectedTavernVisitorId,
+      visitor: selectedVisitor,
+      hero: selectedHero,
+      stats: selectedHero ? heroStats(selectedHero) : null,
+      atlas,
+      activeTab: state.activeTavernDetailTab || "info",
+      availableSkillTreeIds,
+      skillTrees,
+      skills,
+      skillRank,
+      canLearnSkill: () => ({ ok: false, reason: "hire first" }),
       portraitHtml: renderPortrait
-    }, onRecruit);
+    }, {
+      onRecruit,
+      onSelectVisitorInfo: onSelectTavernVisitor
+    });
   }
 
   function renderJobs() {
     renderPopulationJobs(el, {
+      state,
       tavern: state.tavern,
       workSites: workSites(),
       blueprints
+    }, {
+      onAdjustWorker,
+      onAdjustWage,
+      onSetWorkshopRecipe,
+      onSetWorkshopAutoInputs,
+      onSpendWorkshopUpgradePoint
     });
   }
 
@@ -84,6 +126,7 @@ export function createRosterRenderAdapter({
       onCancelParty,
       onTogglePartyMember,
       onAddFocusedToParty,
+      onCraft,
       onLearnSkill
     });
   }

@@ -1,9 +1,15 @@
 import {
   assignWorkerResultMessage,
+  adjustWorkerResultMessage,
+  adjustWageResultMessage,
+  buildHousesResultMessage,
   craftResultMessage,
   focusHeroResultMessage,
   recruitResultMessage,
-  upgradeTavernResultMessage
+  upgradeTavernResultMessage,
+  workshopAutoInputsResultMessage,
+  workshopRecipeResultMessage,
+  workshopUpgradeResultMessage
 } from "./commandMessages.js";
 import { craftBlueprint } from "../game/roster/craftingCommands.js";
 import {
@@ -15,6 +21,17 @@ import {
   tavernUpgradeCost,
   upgradeTavern
 } from "../game/tavern/tavernCommands.js";
+import {
+  adjustWorkerAssignment,
+  adjustSettlementWage,
+  buildHouses
+} from "../game/settlement/workforceModel.js";
+import { EVENT_TRIGGERS } from "../game/events/eventDefinitions.js";
+import {
+  setWorkshopRecipe,
+  setWorkshopAutoInputs,
+  spendWorkshopUpgradePoint
+} from "../game/workshop/workshopCommands.js";
 
 export function createRosterTavernCommandHandlers({
   state,
@@ -24,7 +41,8 @@ export function createRosterTavernCommandHandlers({
   canPay,
   pay,
   addLog,
-  render
+  render,
+  triggerEvent
 }) {
   return {
     recruit(visitorId) {
@@ -32,6 +50,9 @@ export function createRosterTavernCommandHandlers({
       const message = recruitResultMessage(result, state);
       if (!message) return;
       addLog(message.text, message.type);
+      if (result.ok) {
+        triggerEvent?.(EVENT_TRIGGERS.FIRST_RECRUIT, { renderAfter: false });
+      }
       render();
     },
 
@@ -40,6 +61,13 @@ export function createRosterTavernCommandHandlers({
       const message = focusHeroResultMessage(result);
       if (!message) return;
       addLog(message.text, message.type);
+      render();
+    },
+
+    selectTavernVisitor(visitorId) {
+      if (!visitors.some((visitor) => visitor.id === visitorId)) return;
+      state.selectedTavernVisitorId = visitorId;
+      state.activeTavernDetailTab = "info";
       render();
     },
 
@@ -53,6 +81,9 @@ export function createRosterTavernCommandHandlers({
       const message = craftResultMessage(result);
       if (!message) return;
       addLog(message.text, message.type);
+      if (result.ok) {
+        triggerEvent?.(EVENT_TRIGGERS.FIRST_ITEM_CRAFTED, { renderAfter: false });
+      }
       render();
     },
 
@@ -66,6 +97,48 @@ export function createRosterTavernCommandHandlers({
     assignWorker(job) {
       const result = assignWorker(state, job);
       const message = assignWorkerResultMessage(result, job);
+      addLog(message.text, message.type);
+      render();
+    },
+
+    adjustWorker(job, delta, options = {}) {
+      const result = adjustWorkerAssignment(state, job, delta, options);
+      const message = adjustWorkerResultMessage(result, job);
+      addLog(message.text, message.type);
+      render();
+    },
+
+    adjustWage(delta) {
+      const result = adjustSettlementWage(state, delta);
+      const message = adjustWageResultMessage(result);
+      addLog(message.text, message.type);
+      render();
+    },
+
+    buildHouses() {
+      const result = buildHouses(state, { canPay, pay });
+      const message = buildHousesResultMessage(result);
+      addLog(message.text, message.type);
+      render();
+    },
+
+    setWorkshopRecipe(slotIndex, recipeId) {
+      const result = setWorkshopRecipe(state, slotIndex, recipeId);
+      const message = workshopRecipeResultMessage(result);
+      addLog(message.text, message.type);
+      render();
+    },
+
+    setWorkshopAutoInputs(slotIndex, enabled) {
+      const result = setWorkshopAutoInputs(state, slotIndex, enabled);
+      const message = workshopAutoInputsResultMessage(result);
+      addLog(message.text, message.type);
+      render();
+    },
+
+    spendWorkshopUpgradePoint(nodeId) {
+      const result = spendWorkshopUpgradePoint(state, nodeId);
+      const message = workshopUpgradeResultMessage(result);
       addLog(message.text, message.type);
       render();
     }

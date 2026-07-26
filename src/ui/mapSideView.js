@@ -6,7 +6,8 @@ export function locationDetailHtml({
   distanceText,
   rewardText,
   heroName,
-  assignedWorkers = 0
+  assignedWorkers = 0,
+  workSiteUpgrade = null
 }) {
   const lines = [
     `<div class="detail-title">${location.name}</div>`,
@@ -19,14 +20,21 @@ export function locationDetailHtml({
 
   if (location.type === "work") {
     lines.push(`<div class="detail-line">output: ${rewardText(location.output)}</div>`);
-    lines.push(`<div class="detail-line">assigned workers: ${assignedWorkers}</div>`);
+    if (workSiteUpgrade) {
+      lines.push(`<div class="detail-line">upgrade: level ${workSiteUpgrade.level}</div>`);
+      lines.push(`<div class="detail-line">workplaces: ${assignedWorkers}/${workSiteUpgrade.maxWorkers}</div>`);
+      lines.push(`<div class="detail-line">next upgrade: ${workSiteUpgrade.costText}</div>`);
+      lines.push(`<button data-upgrade-work-site="${location.id}">upgrade location</button>`);
+    } else {
+      lines.push(`<div class="detail-line">assigned workers: ${assignedWorkers}</div>`);
+    }
   }
 
   if (location.type === "dungeon") {
     const members = party.memberIds.map(heroName).join(", ") || "empty";
     lines.push(`<div class="detail-line">selected party: ${party.name} (${members})</div>`);
     lines.push(`<div class="detail-line">party readiness: ${partyReady.message}</div>`);
-    lines.push(`<button id="assignSelectedPartyBtn" ${partyReady.canQueue ? "" : "disabled"}>assign repeated route</button>`);
+    lines.push(`<div class="detail-line">click dungeon on map to run</div>`);
   }
 
   return lines.join("");

@@ -34,6 +34,7 @@ test("registerAppBootstrap runs startup sequence after DOMContentLoaded", async 
     render: () => calls.push("render"),
     renderMapActors: () => calls.push("renderMapActors"),
     currentVisualHourFraction: () => 0.5,
+    startAutoTime: () => calls.push("startAutoTime"),
     startMapLoop: () => calls.push("startMapLoop")
   });
 
@@ -48,9 +49,59 @@ test("registerAppBootstrap runs startup sequence after DOMContentLoaded", async 
     "populatePartySelect",
     ["addLog", "system ready: deterministic prototype loaded", "ok"],
     "render",
+    "startAutoTime",
     "startMapLoop"
   ]);
 });
+
+test("registerAppBootstrap loads autosave before initial render", async () => {
+  const calls = [];
+  let listener = null;
+
+  registerAppBootstrap({
+    documentRef: {
+      addEventListener(_type, callback) {
+        listener = callback;
+      }
+    },
+    windowRef: {},
+    state: { activeTab: "map", timeRunning: false },
+    bindElements: () => calls.push("bindElements"),
+    setupControls: () => calls.push("setupControls"),
+    loadPoiData: async () => ({ tavern: { coord: { x: 1, y: 2 } } }),
+    setPoiData: () => calls.push("setPoiData"),
+    loadAutosave: () => {
+      calls.push("loadAutosave");
+      return { ok: true, savedAt: "saved" };
+    },
+    populateDungeonSelect: () => calls.push("populateDungeonSelect"),
+    populatePartySelect: () => calls.push("populatePartySelect"),
+    addLog: (text, type) => calls.push(["addLog", text, type]),
+    renderSystems: () => calls.push("renderSystems"),
+    render: () => calls.push("render"),
+    renderMapActors: () => calls.push("renderMapActors"),
+    currentVisualHourFraction: () => 0.5,
+    startAutoTime: () => calls.push("startAutoTime"),
+    startMapLoop: () => calls.push("startMapLoop")
+  });
+
+  await listener();
+
+  assert.deepEqual(calls, [
+    "bindElements",
+    "setupControls",
+    "setPoiData",
+    "loadAutosave",
+    ["addLog", "autosave loaded: saved", "ok"],
+    "populateDungeonSelect",
+    "populatePartySelect",
+    ["addLog", "system ready: deterministic prototype loaded", "ok"],
+    "render",
+    "startAutoTime",
+    "startMapLoop"
+  ]);
+});
+
 
 test("registerAppBootstrap logs and renders systems on POI load failure", async () => {
   const calls = [];

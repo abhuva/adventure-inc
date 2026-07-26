@@ -42,6 +42,9 @@ function createHarness(overrides = {}) {
     state,
     controls: {
       setDungeon: (dungeonId) => calls.push(["setDungeon", dungeonId]),
+      setParty: (partyId) => calls.push(["setParty", partyId]),
+      setRepeatMode: (mode) => calls.push(["setRepeatMode", mode]),
+      setStopNode: (nodeId) => calls.push(["setStopNode", nodeId]),
       strategy: () => "balanced",
       stopNode: () => "all"
     },
@@ -52,7 +55,10 @@ function createHarness(overrides = {}) {
       return sampleEstimate({ partyId: party.id, partyName: party.name, dungeonId: dungeon.id, dungeonName: dungeon.name });
     },
     ensureRepeatedPlanQueued: (partyId) => calls.push(["queue", partyId]),
+    populateDungeonSelect: () => calls.push("populateDungeonSelect"),
     populateStopNodes: () => calls.push("populateStopNodes"),
+    replayTimerApi: () => ({ stop: () => calls.push("stopReplay") }),
+    setTab: (tabId) => calls.push(["tab", tabId]),
     addLog: (text, type) => logs.push({ text, type }),
     render: () => calls.push("render")
   });
@@ -68,7 +74,31 @@ test("map handlers select dungeon locations and clear cached estimates", () => {
 
   assert.equal(state.selectedLocationId, "cellar");
   assert.equal(state.lastEstimate, null);
-  assert.deepEqual(calls, [["setDungeon", "cellar"], "populateStopNodes", "render"]);
+  assert.deepEqual(calls, ["populateDungeonSelect", ["setDungeon", "cellar"], "populateStopNodes", "render"]);
+});
+
+test("map handlers open and cancel dungeon context menu from map clicks", () => {
+  const { state, calls, handlers } = createHarness({
+    state: { selectedLocationId: "tavern", lastEstimate: sampleEstimate() }
+  });
+
+  handlers.selectLocationFromMap("cellar", { x: 55, y: 70 });
+
+  assert.deepEqual(state.mapContextMenu, { locationId: "cellar", x: 55, y: 70 });
+  assert.equal(state.lastEstimate, null);
+  assert.deepEqual(calls, [
+    "populateDungeonSelect",
+    ["setDungeon", "cellar"],
+    "populateStopNodes",
+    ["setStopNode", "all"],
+    ["setRepeatMode", "repeat"],
+    "render"
+  ]);
+
+  handlers.closeMapContextMenu();
+
+  assert.equal(state.mapContextMenu, null);
+  assert.deepEqual(calls.slice(-1), ["render"]);
 });
 
 test("map handlers select non-dungeon locations without changing dungeon controls", () => {
@@ -94,7 +124,18 @@ test("map handlers assign selected party to dungeon as repeated route", () => {
   assert.equal(state.repeatedPlans["party-1"].dungeonId, "cellar");
   assert.notEqual(state.repeatedPlans["party-1"], state.lastEstimate);
   assert.match(logs[0].text, /repeated map assignment set: Alpha -> Rat Cellar/);
-  assert.deepEqual(calls, [["simulate", "cellar", "balanced", "all", "party-1"], ["queue", "party-1"], "render"]);
+  assert.deepEqual(calls, [
+    "populateDungeonSelect",
+    ["setDungeon", "cellar"],
+    "populateStopNodes",
+    ["setParty", "party-1"],
+    ["setStopNode", "all"],
+    ["setRepeatMode", "repeat"],
+    ["simulate", "cellar", "balanced", "all", "party-1"],
+    ["queue", "party-1"],
+    ["tab", "dungeon"],
+    "render"
+  ]);
 });
 
 test("map handlers ignore assignment when selected location is not a dungeon", () => {

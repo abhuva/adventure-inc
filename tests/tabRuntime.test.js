@@ -3,7 +3,10 @@ import test from "node:test";
 
 import {
   setActiveByDataset,
+  setPopulationLocalTabActive,
   setMapSideTabActive,
+  setRosterDetailTabActive,
+  setTavernDetailTabActive,
   setTopTabActive
 } from "../src/ui/tabRuntime.js";
 
@@ -84,4 +87,58 @@ test("setMapSideTabActive queries map side tab selectors", () => {
   assert.equal(operationButton.classList.contains("active"), true);
   assert.equal(infoPanel.classList.contains("active"), false);
   assert.equal(operationPanel.classList.contains("active"), true);
+});
+
+test("setPopulationLocalTabActive queries population local tab selectors", () => {
+  const populationButton = fakeElement({ populationLocalTab: "population" });
+  const workshopButton = fakeElement({ populationLocalTab: "workshop" });
+  const populationPanel = fakeElement({ populationLocalPanel: "population" });
+  const workshopPanel = fakeElement({ populationLocalPanel: "workshop" });
+  const documentRef = fakeDocument({
+    "[data-population-local-tab]": [populationButton, workshopButton],
+    "[data-population-local-panel]": [populationPanel, workshopPanel]
+  });
+
+  setPopulationLocalTabActive(documentRef, "workshop");
+
+  assert.equal(populationButton.classList.contains("active"), false);
+  assert.equal(workshopButton.classList.contains("active"), true);
+  assert.equal(populationPanel.classList.contains("active"), false);
+  assert.equal(workshopPanel.classList.contains("active"), true);
+});
+
+test("setRosterDetailTabActive queries roster detail tab selectors", () => {
+  const infoButton = fakeElement({ rosterDetailTab: "info" });
+  const skillButton = fakeElement({ rosterDetailTab: "skill1" });
+  const infoPanel = fakeElement({ rosterDetailPanel: "info" });
+  const skillPanel = fakeElement({ rosterDetailPanel: "skill1" });
+  const documentRef = fakeDocument({
+    "[data-roster-detail-tab]": [infoButton, skillButton],
+    "[data-roster-detail-panel]": [infoPanel, skillPanel]
+  });
+
+  setRosterDetailTabActive(documentRef, "skill1");
+
+  assert.equal(infoButton.classList.contains("active"), false);
+  assert.equal(skillButton.classList.contains("active"), true);
+  assert.equal(infoPanel.classList.contains("active"), false);
+  assert.equal(skillPanel.classList.contains("active"), true);
+});
+
+test("setTavernDetailTabActive queries tavern detail tab selectors", () => {
+  const infoButton = fakeElement({ tavernDetailTab: "info" });
+  const skillButton = fakeElement({ tavernDetailTab: "skill1" });
+  const infoPanel = fakeElement({ tavernDetailPanel: "info" });
+  const skillPanel = fakeElement({ tavernDetailPanel: "skill1" });
+  const documentRef = fakeDocument({
+    "[data-tavern-detail-tab]": [infoButton, skillButton],
+    "[data-tavern-detail-panel]": [infoPanel, skillPanel]
+  });
+
+  setTavernDetailTabActive(documentRef, "skill1");
+
+  assert.equal(infoButton.classList.contains("active"), false);
+  assert.equal(skillButton.classList.contains("active"), true);
+  assert.equal(infoPanel.classList.contains("active"), false);
+  assert.equal(skillPanel.classList.contains("active"), true);
 });

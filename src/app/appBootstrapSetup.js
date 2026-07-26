@@ -13,6 +13,11 @@ export function setupAppBootstrap({
   addLog,
   renderSystems,
   render,
+  loadAutosave,
+  loadMapBackground,
+  applyMapBackground,
+  startAutoTime,
+  onStartupComplete,
   renderMapActors,
   currentVisualHourFraction,
   registerAppBootstrap,
@@ -33,6 +38,11 @@ export function setupAppBootstrap({
     addLog,
     renderSystems,
     render,
+    loadAutosave,
+    loadMapBackground,
+    applyMapBackground,
+    startAutoTime,
+    onStartupComplete,
     renderMapActors,
     currentVisualHourFraction
   });

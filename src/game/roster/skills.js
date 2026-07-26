@@ -1,39 +1,68 @@
-function skill(name, category, maxRank, requires, effects) {
-  return { name, category, maxRank, requires, effects };
+function skill(name, category, maxRank, requires, effects, options = {}) {
+  return { name, category, maxRank, requires, effects, ...options };
+}
+
+const RACE_RESOLVE_NAMES = {
+  human: ["First Nerve", "Road-Worn Grit", "Founder Oath"],
+  dwarf: ["Stone Nerve", "Deep Hall Grit", "Oath Under Mountain"],
+  elf: ["Quiet Breath", "Moonlit Focus", "Ancient Patience"],
+  "half-elf": ["Two-World Nerve", "Borrowed Courage", "Bridge Oath"],
+  demon: ["Cinder Nerve", "Pain Feast", "Hellbound Will"],
+  halfling: ["Small Brave Step", "Hearth Memory", "No Turning Back"],
+  orc: ["Blood Nerve", "Warpath Grit", "Iron Roar"],
+  undead: ["Cold Nerve", "Grave Patience", "Deathless Will"]
+};
+
+function raceResolveSkillIds(raceId) {
+  return [
+    `race.${raceId}.resolve_nerve`,
+    `race.${raceId}.resolve_grit`,
+    `race.${raceId}.resolve_will`
+  ];
+}
+
+function raceResolveSkills(raceId) {
+  const [nerveName, gritName, willName] = RACE_RESOLVE_NAMES[raceId];
+  const [nerveId, gritId, willId] = raceResolveSkillIds(raceId);
+  return {
+    [nerveId]: skill(nerveName, "fight", 3, [], [{ type: "resolve_add", valuePerRank: 1 }]),
+    [gritId]: skill(gritName, "fight", 5, [nerveId], [{ type: "resolve_add", valuePerRank: 2 }], { costPerRank: 2 }),
+    [willId]: skill(willName, "fight", 5, [gritId], [{ type: "resolve_add", valuePerRank: 7 }], { costPerRank: 5 })
+  };
 }
 
 export const SKILL_TREES = {
   "race.human": {
     name: "Human",
-    skillIds: ["race.human.adaptable", "race.human.cross_training", "race.human.logistics"]
+    skillIds: ["race.human.adaptable", "race.human.cross_training", "race.human.logistics", ...raceResolveSkillIds("human")]
   },
   "race.dwarf": {
     name: "Dwarf",
-    skillIds: ["race.dwarf.stone_bones", "race.dwarf.ore_sense", "race.dwarf.grit"]
+    skillIds: ["race.dwarf.stone_bones", "race.dwarf.ore_sense", "race.dwarf.grit", ...raceResolveSkillIds("dwarf")]
   },
   "race.elf": {
     name: "Elf",
-    skillIds: ["race.elf.light_step", "race.elf.keen_eye", "race.elf.precision"]
+    skillIds: ["race.elf.light_step", "race.elf.keen_eye", "race.elf.precision", ...raceResolveSkillIds("elf")]
   },
   "race.half-elf": {
     name: "Half-Elf",
-    skillIds: ["race.half-elf.bridge", "race.half-elf.field_medic", "race.half-elf.negotiator"]
+    skillIds: ["race.half-elf.bridge", "race.half-elf.field_medic", "race.half-elf.negotiator", ...raceResolveSkillIds("half-elf")]
   },
   "race.demon": {
     name: "Demon",
-    skillIds: ["race.demon.burning_blood", "race.demon.hunger", "race.demon.dread"]
+    skillIds: ["race.demon.burning_blood", "race.demon.hunger", "race.demon.dread", ...raceResolveSkillIds("demon")]
   },
   "race.halfling": {
     name: "Halfling",
-    skillIds: ["race.halfling.light_pack", "race.halfling.forager", "race.halfling.slip"]
+    skillIds: ["race.halfling.light_pack", "race.halfling.forager", "race.halfling.slip", ...raceResolveSkillIds("halfling")]
   },
   "race.orc": {
     name: "Orc",
-    skillIds: ["race.orc.brute_force", "race.orc.thick_hide", "race.orc.war_cry"]
+    skillIds: ["race.orc.brute_force", "race.orc.thick_hide", "race.orc.war_cry", ...raceResolveSkillIds("orc")]
   },
   "race.undead": {
     name: "Undead",
-    skillIds: ["race.undead.no_appetite", "race.undead.bone_frame", "race.undead.cold_focus"]
+    skillIds: ["race.undead.no_appetite", "race.undead.bone_frame", "race.undead.cold_focus", ...raceResolveSkillIds("undead")]
   },
   "job.guard": {
     name: "Guard",
@@ -94,6 +123,14 @@ export const SKILLS = {
   "race.undead.no_appetite": skill("No Appetite", "resource", 1, [], [{ type: "food_cost_reduce", valuePerRank: 2 }]),
   "race.undead.bone_frame": skill("Bone Frame", "fight", 2, ["race.undead.no_appetite"], [{ type: "def_add", valuePerRank: 1 }]),
   "race.undead.cold_focus": skill("Cold Focus", "utility", 2, ["race.undead.no_appetite"], [{ type: "utility_add", valuePerRank: 1 }]),
+  ...raceResolveSkills("human"),
+  ...raceResolveSkills("dwarf"),
+  ...raceResolveSkills("elf"),
+  ...raceResolveSkills("half-elf"),
+  ...raceResolveSkills("demon"),
+  ...raceResolveSkills("halfling"),
+  ...raceResolveSkills("orc"),
+  ...raceResolveSkills("undead"),
   "job.guard.steady_stance": skill("Steady Stance", "fight", 3, [], [{ type: "hp_add", valuePerRank: 4 }]),
   "job.guard.shield_wall": skill("Shield Wall", "fight", 3, ["job.guard.steady_stance"], [{ type: "def_add", valuePerRank: 1 }]),
   "job.guard.intercept": skill("Intercept", "fight", 1, ["job.guard.shield_wall"], [{ type: "def_add", valuePerRank: 2 }]),

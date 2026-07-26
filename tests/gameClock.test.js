@@ -1,19 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { advanceClock, advanceWorkerCycles, applyDailyTavernIncome, dailyTavernIncome, normalizeClock } from "../src/game/time/gameClock.js";
-
-test("dailyTavernIncome derives food from fame and coin from population", () => {
-  assert.deepEqual(dailyTavernIncome({ fame: 0, population: 1 }), { food: 2, coin: 1 });
-  assert.deepEqual(dailyTavernIncome({ fame: 7, population: 6 }), { food: 4, coin: 3 });
-});
-
-test("applyDailyTavernIncome mutates explicit state resources", () => {
-  const state = { tavern: { fame: 3, population: 4 }, resources: { food: 1, coin: 2 } };
-  const income = applyDailyTavernIncome(state);
-
-  assert.deepEqual(income, { food: 3, coin: 2 });
-  assert.deepEqual(state.resources, { food: 4, coin: 4 });
-});
+import { advanceClock, advanceWorkerCycles, normalizeClock } from "../src/game/time/gameClock.js";
 
 test("advanceClock advances hours and emits day rollovers", () => {
   const state = { day: 1, hour: 22 };

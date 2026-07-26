@@ -6,11 +6,16 @@ export function registerAppBootstrap({
   setupControls,
   loadPoiData,
   setPoiData,
+  loadMapBackground,
+  applyMapBackground,
   populateDungeonSelect,
   populatePartySelect,
   addLog,
   renderSystems,
   render,
+  loadAutosave,
+  startAutoTime,
+  onStartupComplete,
   renderMapActors,
   currentVisualHourFraction,
   startMapLoop = startMapAnimationLoop
@@ -25,16 +30,35 @@ export function registerAppBootstrap({
       renderSystems();
       throw error;
     }
+    if (loadAutosave) {
+      try {
+        const result = loadAutosave();
+        if (result.ok) {
+          addLog(`autosave loaded${result.savedAt ? `: ${result.savedAt}` : ""}`, "ok");
+        }
+      } catch (error) {
+        addLog(`autosave load failed: ${error.message}`, "bad");
+      }
+    }
+    if (loadMapBackground && applyMapBackground) {
+      try {
+        applyMapBackground(await loadMapBackground());
+      } catch (error) {
+        addLog(error.message, "bad");
+      }
+    }
     populateDungeonSelect();
     populatePartySelect();
     addLog("system ready: deterministic prototype loaded", "ok");
     render();
+    startAutoTime?.();
     startMapLoop({
       windowRef,
       state,
       renderMapActors,
       currentVisualHourFraction
     });
+    onStartupComplete?.();
   });
 }
 

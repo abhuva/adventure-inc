@@ -34,6 +34,7 @@ test("createHeroFromVisitor maps visitor data into level-one hero state", () => 
 
 test("recruitVisitor blocks capacity and cost before mutating roster", () => {
   const state = createInitialState();
+  state.tavernVisitors.visitors.mira = { state: "present", nextChangeDay: 3 };
   state.tavern.capacity = 1;
   assert.equal(recruitVisitor(state, "mira", [visitor]).reason, "capacity");
   assert.equal(state.roster.length, 1);
@@ -45,13 +46,25 @@ test("recruitVisitor blocks capacity and cost before mutating roster", () => {
 
 test("recruitVisitor pays cost and appends hero", () => {
   const state = createInitialState();
+  state.tavernVisitors.visitors.mira = { state: "present", nextChangeDay: 3 };
   state.tavern.capacity = 2;
   let paid = null;
   const result = recruitVisitor(state, "mira", [visitor], { canPay: () => true, pay: (cost) => { paid = cost; } });
 
   assert.equal(result.ok, true);
   assert.equal(state.roster.at(-1).id, "mira");
+  assert.equal(state.tavernVisitors.visitors.mira, undefined);
   assert.deepEqual(paid, { coin: 4 });
+});
+
+test("recruitVisitor blocks visitors who are not currently waiting", () => {
+  const state = createInitialState();
+  state.tavern.capacity = 2;
+  const result = recruitVisitor(state, "mira", [visitor], { canPay: () => true });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "not visiting");
+  assert.equal(state.roster.length, 1);
 });
 
 test("focusHero changes focus and invalidates cached estimate", () => {
@@ -110,4 +123,18 @@ test("learnSkill applies skill point bonus and stops repeated plan for hero part
   assert.equal(result.stoppedRepeatedPlan, true);
   assert.equal(state.repeatedPlans["party-1"], undefined);
   assert.equal(state.lastEstimate, null);
+});
+
+test("learnSkill spends expensive resolve rank costs", () => {
+  const state = createInitialState();
+  const hero = state.roster[0];
+  hero.skillPoints = 3;
+  hero.learnedSkills = { "race.human.resolve_nerve": 1 };
+
+  const result = learnSkill(state, "ada", "race.human.resolve_grit");
+
+  assert.equal(result.ok, true);
+  assert.equal(result.rank, 1);
+  assert.equal(hero.skillPoints, 1);
+  assert.equal(hero.learnedSkills["race.human.resolve_grit"], 1);
 });

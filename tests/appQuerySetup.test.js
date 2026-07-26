@@ -12,6 +12,12 @@ test("app query setup composes data, Temple, and selection facades", () => {
   const state = {
     selectedLocationId: "rat_cellar",
     selectedPartyId: "party_alpha",
+    progression: {
+      unlockedLocations: { tavern: true, rat_cellar: true },
+      dungeonClears: {},
+      dungeonMastery: {},
+      uniqueBosses: {}
+    },
     parties: [{ id: "party_alpha", memberIds: [] }],
     roster: [],
     operations: [],

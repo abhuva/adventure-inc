@@ -9,6 +9,7 @@ import {
 test("DEFAULT_RENDER_ORDER keeps top-level render sequence stable", () => {
   assert.deepEqual(DEFAULT_RENDER_ORDER, [
     "header",
+    "encounter",
     "map",
     "visitors",
     "jobs",

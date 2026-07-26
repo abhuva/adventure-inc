@@ -14,7 +14,7 @@ export function createMapRenderAdapter({
   state,
   el,
   documentRef,
-  worldSize,
+  mapWorld,
   workSites,
   tavernCoord,
   mapLocations,
@@ -25,14 +25,19 @@ export function createMapRenderAdapter({
   currentVisualHourFraction,
   formatReward,
   heroName,
+  workSiteUpgrade,
   selectLocation,
-  assignSelectedPartyToSelectedDungeon
+  selectLocationFromMap,
+  assignSelectedPartyToSelectedDungeon,
+  upgradeSelectedWorkSite,
+  closeMapContextMenu
 }) {
   function mapStatusText() {
     return buildMapStatusText({
       operationCount: state.operations.length,
       zoom: state.mapView.zoom,
-      worldSize
+      worldWidth: mapWorld().width,
+      worldHeight: mapWorld().height
     });
   }
 
@@ -40,7 +45,7 @@ export function createMapRenderAdapter({
     const world = documentRef.getElementById("mapWorld");
     if (!world) return;
     world.style.transform = mapTransformStyle(state.mapView);
-    el.mapStatus.textContent = mapStatusText();
+    if (el.mapStatus) el.mapStatus.textContent = mapStatusText();
   }
 
   function formatMapDistance(from, to) {
@@ -85,7 +90,9 @@ export function createMapRenderAdapter({
       distanceText: formatMapDistance,
       rewardText: formatReward,
       heroName,
-      onAssignSelectedParty: assignSelectedPartyToSelectedDungeon
+      onAssignSelectedParty: assignSelectedPartyToSelectedDungeon,
+      onUpgradeWorkSite: upgradeSelectedWorkSite,
+      workSiteUpgrade: workSiteUpgrade?.(location)
     });
   }
 
@@ -98,23 +105,30 @@ export function createMapRenderAdapter({
       el,
       poi,
       selectedLocationId: state.selectedLocationId,
+      mapContextMenu: state.mapContextMenu,
       selectedLocation: location,
       selectedParty: party,
       partyReady: partyAssignmentReadiness(party),
       tavernCoord: tavernCoord(),
+      mapWorld: mapWorld(),
       jobs: state.tavern.jobs,
       operations: state.operations,
       repeatedPlans: state.repeatedPlans,
+      logEntries: state.log,
       resources: state.resources,
       currentOperationPhase,
       distanceText: formatMapDistance,
       rewardText: formatReward,
       heroName,
+      workSiteUpgrade,
       applyMapTransform,
       renderMapActors,
       hourFraction: currentVisualHourFraction(),
-      onSelectLocation: selectLocation,
-      onAssignSelectedParty: assignSelectedPartyToSelectedDungeon
+      onSelectLocation: selectLocationFromMap || ((locationId) => selectLocation(locationId)),
+      onAssignSelectedParty: assignSelectedPartyToSelectedDungeon,
+      onUpgradeWorkSite: upgradeSelectedWorkSite,
+      onRunContext: assignSelectedPartyToSelectedDungeon,
+      onCancelContext: closeMapContextMenu
     });
   }
 

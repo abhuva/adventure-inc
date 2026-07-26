@@ -1,0 +1,1 @@
+- adventurer stats doesnt seem to be effected by effects of temple and also skill nodes? Atleast it was noticable with Mira and utility skill

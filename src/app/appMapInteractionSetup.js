@@ -10,7 +10,7 @@ export function setupAppMapInteractions({
 }) {
   setupMapInteractions({
     mapElement: el.overlandMap,
-    mapView: state.mapView,
+    mapView: () => state.mapView,
     minZoom: mapViewConfig.minZoom,
     maxZoom: mapViewConfig.maxZoom,
     applyMapTransform,

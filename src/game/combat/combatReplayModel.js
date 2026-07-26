@@ -22,6 +22,9 @@ export function snapshotCombatActors(actors) {
     maxHp: actor.maxHp,
     atk: actor.atk,
     def: actor.def,
+    resolveLeft: actor.resolveLeft,
+    resolveMax: actor.resolveMax,
+    withdrew: Boolean(actor.withdrew),
     initiative: actor.initiative,
     speed: actor.speed
   }));

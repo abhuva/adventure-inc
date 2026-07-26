@@ -9,6 +9,7 @@ export function heroStats(hero) {
     atk: hero.base.atk + hero.level + gearAtk + effects.atk_add,
     def: hero.base.def + gearDef + effects.def_add,
     utility: hero.base.utility + effects.utility_add,
+    resolve: (hero.base.resolve ?? 10) + Math.floor(hero.level / 2) + effects.resolve_add,
     travelSpeed: effects.travel_speed_add,
     recoveryReduce: effects.recovery_reduce,
     foodCostReduce: effects.food_cost_reduce - effects.food_cost_add
@@ -21,6 +22,7 @@ export function heroSkillEffects(hero) {
     atk_add: 0,
     def_add: 0,
     utility_add: 0,
+    resolve_add: 0,
     travel_speed_add: 0,
     recovery_reduce: 0,
     food_cost_reduce: 0,

@@ -29,6 +29,14 @@ function createHarness() {
   const mapPanel = fakeElement({ tabPanel: "map" });
   const operationButton = fakeElement({ mapSideTab: "operations" });
   const operationPanel = fakeElement({ mapSidePanel: "operations" });
+  const dungeonInfoButton = fakeElement({ dungeonLocalTab: "info" });
+  const dungeonInfoPanel = fakeElement({ dungeonLocalPanel: "info" });
+  const populationWorkshopButton = fakeElement({ populationLocalTab: "workshop" });
+  const populationWorkshopPanel = fakeElement({ populationLocalPanel: "workshop" });
+  const rosterSkillButton = fakeElement({ rosterDetailTab: "skill1" });
+  const rosterSkillPanel = fakeElement({ rosterDetailPanel: "skill1" });
+  const tavernSkillButton = fakeElement({ tavernDetailTab: "skill1" });
+  const tavernSkillPanel = fakeElement({ tavernDetailPanel: "skill1" });
   const state = {
     activeTab: "tavern",
     selectedPartyId: "old_party",
@@ -49,7 +57,15 @@ function createHarness() {
           "[data-tab]": [mapButton],
           "[data-tab-panel]": [mapPanel],
           "[data-map-side-tab]": [operationButton],
-          "[data-map-side-panel]": [operationPanel]
+          "[data-map-side-panel]": [operationPanel],
+          "[data-dungeon-local-tab]": [dungeonInfoButton],
+          "[data-dungeon-local-panel]": [dungeonInfoPanel],
+          "[data-population-local-tab]": [populationWorkshopButton],
+          "[data-population-local-panel]": [populationWorkshopPanel],
+          "[data-roster-detail-tab]": [rosterSkillButton],
+          "[data-roster-detail-panel]": [rosterSkillPanel],
+          "[data-tavern-detail-tab]": [tavernSkillButton],
+          "[data-tavern-detail-panel]": [tavernSkillPanel]
         }[selector] || [];
       }
     },
@@ -60,16 +76,32 @@ function createHarness() {
       clearIntervalFn: (timer) => clearedTimers.push(timer)
     }),
     populateStopNodes: () => calls.push("populateStopNodes"),
-    render: () => calls.push("render")
+    render: () => calls.push("render"),
+    saveNow: () => {
+      calls.push("saveNow");
+      return { ok: true };
+    },
+    resetSave: () => {
+      calls.push("resetSave");
+      return { ok: true };
+    }
   });
   return {
     calls,
     clearedTimers,
     handlers,
+    dungeonInfoButton,
+    dungeonInfoPanel,
     mapButton,
     mapPanel,
     operationButton,
     operationPanel,
+    populationWorkshopButton,
+    populationWorkshopPanel,
+    rosterSkillButton,
+    rosterSkillPanel,
+    tavernSkillButton,
+    tavernSkillPanel,
     state
   };
 }
@@ -108,20 +140,53 @@ test("app shell handlers update selected party and invalidate estimate", () => {
 
 test("app shell handlers set active tab and map side tab classes", () => {
   const {
+    calls,
     handlers,
+    dungeonInfoButton,
+    dungeonInfoPanel,
     mapButton,
     mapPanel,
     operationButton,
     operationPanel,
+    populationWorkshopButton,
+    populationWorkshopPanel,
+    rosterSkillButton,
+    rosterSkillPanel,
+    tavernSkillButton,
+    tavernSkillPanel,
     state
   } = createHarness();
 
   handlers.setTab("map");
   handlers.setMapSideTab("operations");
+  handlers.setDungeonLocalTab("info");
+  handlers.setPopulationLocalTab("workshop");
+  handlers.setRosterDetailTab("skill1");
+  handlers.setTavernDetailTab("skill1");
 
   assert.equal(state.activeTab, "map");
   assert.equal(mapButton.classList.contains("active"), true);
   assert.equal(mapPanel.classList.contains("active"), true);
   assert.equal(operationButton.classList.contains("active"), true);
   assert.equal(operationPanel.classList.contains("active"), true);
+  assert.equal(dungeonInfoButton.classList.contains("active"), true);
+  assert.equal(dungeonInfoPanel.classList.contains("active"), true);
+  assert.equal(populationWorkshopButton.classList.contains("active"), true);
+  assert.equal(populationWorkshopPanel.classList.contains("active"), true);
+  assert.equal(rosterSkillButton.classList.contains("active"), true);
+  assert.equal(rosterSkillPanel.classList.contains("active"), true);
+  assert.equal(tavernSkillButton.classList.contains("active"), true);
+  assert.equal(tavernSkillPanel.classList.contains("active"), true);
+  assert.equal(state.activeRosterDetailTab, "skill1");
+  assert.equal(state.activeTavernDetailTab, "skill1");
+  assert.equal(calls.includes("saveNow"), true);
+});
+
+test("app shell handlers expose save and reset actions", () => {
+  const { calls, handlers } = createHarness();
+
+  assert.deepEqual(handlers.saveNow(), { ok: true });
+  assert.deepEqual(handlers.resetSave(), { ok: true });
+
+  assert.deepEqual(calls, ["saveNow", "render", "resetSave"]);
 });

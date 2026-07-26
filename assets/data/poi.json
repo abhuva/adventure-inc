@@ -40,27 +40,183 @@
       "description": "A short starter dungeon below old storage tunnels.",
       "travelHours": 2,
       "foodCost": 1,
+      "startNodeIds": ["entry"],
+      "routes": [
+        { "id": "stores", "name": "Stores Sweep", "nodeIds": ["entry", "rats", "cache"] },
+        { "id": "warden", "name": "Warden Break", "nodeIds": ["entry", "crawl", "scent_warden"] },
+        { "id": "deep_nest", "name": "Deep Nest Push", "default": true, "nodeIds": ["entry", "rats", "cache", "scent_warden", "queen_tunnel", "boss"] },
+        { "id": "smuggler_crawl", "name": "Smuggler Crawl", "nodeIds": ["entry", "crawl", "cache", "guard"] }
+      ],
+      "edges": [
+        { "from": "entry", "to": "rats" },
+        { "from": "entry", "to": "crawl" },
+        { "from": "rats", "to": "cache" },
+        { "from": "crawl", "to": "cache" },
+        { "from": "crawl", "to": "larder_shortcut" },
+        { "from": "cache", "to": "guard" },
+        { "from": "cache", "to": "scent_warden" },
+        { "from": "larder_shortcut", "to": "guard" },
+        { "from": "scent_warden", "to": "queen_tunnel" },
+        { "from": "guard", "to": "queen_tunnel" },
+        { "from": "queen_tunnel", "to": "boss", "lockedByNodeId": "scent_warden" }
+      ],
+      "modifiers": [
+        {
+          "id": "matron_frenzy",
+          "name": "Matron Frenzy",
+          "sourceNodeId": "scent_warden",
+          "targetNodeIds": ["guard", "boss"],
+          "effects": [
+            { "type": "enemy_atk_add", "value": 2 },
+            { "type": "resolve_cost_add", "value": 1 }
+          ]
+        }
+      ],
+      "mastery": {
+        "xpPerPoint": 12,
+        "nodes": {
+          "mapped_stores": {
+            "name": "Mapped Stores",
+            "category": "route",
+            "maxRank": 1,
+            "requires": [],
+            "effects": [{ "type": "route_hint", "valuePerRank": 1 }],
+            "x": 0,
+            "y": 0
+          },
+          "iron_blade_lead": {
+            "name": "Iron Blade Lead",
+            "category": "blueprint",
+            "maxRank": 1,
+            "requires": ["mapped_stores"],
+            "effects": [{ "type": "blueprint_hint", "blueprint": "ironBlade", "valuePerRank": 1 }],
+            "x": 1,
+            "y": 1
+          },
+          "matron_study": {
+            "name": "Matron Study",
+            "category": "boss",
+            "maxRank": 1,
+            "requires": ["iron_blade_lead"],
+            "effects": [{ "type": "boss_access", "nodeId": "boss", "valuePerRank": 1 }],
+            "x": 2,
+            "y": 2
+          }
+        }
+      },
       "nodes": [
         {
           "id": "entry",
           "name": "Collapsed Entry",
           "type": "hazard",
+          "x": 8,
+          "y": 50,
+          "resolveCost": 2,
           "damage": 2,
-          "reward": { "hide": 1 }
+          "reward": { "hide": 1, "dungeonXp": 2 }
         },
         {
           "id": "rats",
           "name": "Rat Pack",
           "type": "combat",
+          "x": 24,
+          "y": 36,
+          "resolveCost": 3,
           "enemy": { "hp": 18, "atk": 3, "script": ["bite", "bite", "scratch"] },
-          "reward": { "hide": 3, "coin": 2, "xp": 2 }
+          "reward": { "hide": 3, "coin": 2, "xp": 2, "dungeonXp": 4 }
+        },
+        {
+          "id": "crawl",
+          "name": "Smuggler Crawl",
+          "type": "check",
+          "x": 24,
+          "y": 64,
+          "resolveCost": 3,
+          "utility": 2,
+          "reward": { "coin": 3, "dungeonXp": 4 }
+        },
+        {
+          "id": "cache",
+          "name": "Gnawed Cache",
+          "type": "check",
+          "x": 42,
+          "y": 48,
+          "resolveCost": 2,
+          "utility": 1,
+          "reward": { "hide": 2, "coin": 2, "dungeonXp": 3 }
+        },
+        {
+          "id": "larder_shortcut",
+          "name": "Larder Shortcut",
+          "type": "relief",
+          "x": 42,
+          "y": 74,
+          "resolveCost": 1,
+          "damage": 0,
+          "reward": { "food": 1, "dungeonXp": 2 },
+          "effectsOnClear": [
+            { "type": "node_resolve_cost_add", "targetNodeId": "guard", "value": -1, "minimum": -2 },
+            { "type": "node_resolve_cost_add", "targetNodeId": "queen_tunnel", "value": -1, "minimum": -2 }
+          ]
+        },
+        {
+          "id": "scent_warden",
+          "name": "Scent Warden",
+          "type": "miniboss",
+          "oneTime": true,
+          "uniqueBoss": true,
+          "x": 60,
+          "y": 30,
+          "resolveCost": 4,
+          "enemy": {
+            "hp": 46,
+            "atk": 7,
+            "def": 1,
+            "initiative": 42,
+            "speed": 24,
+            "script": ["bite", "shriek", "guard", "heavy"]
+          },
+          "reward": { "hide": 5, "coin": 3, "xp": 5, "dungeonXp": 10 },
+          "effectsOnClear": [
+            { "type": "disable_modifier", "modifierId": "matron_frenzy" },
+            { "type": "unlock_node", "nodeId": "queen_tunnel" },
+            { "type": "unlock_feature", "featureId": "dungeon_node_modifiers" }
+          ]
+        },
+        {
+          "id": "guard",
+          "name": "Nest Guard",
+          "type": "combat",
+          "x": 60,
+          "y": 56,
+          "resolveCost": 4,
+          "enemy": { "hp": 28, "atk": 4, "script": ["bite", "guard", "heavy"] },
+          "reward": { "hide": 4, "xp": 3, "dungeonXp": 6 }
+        },
+        {
+          "id": "queen_tunnel",
+          "name": "Queen Tunnel",
+          "type": "hazard",
+          "requiresNodeId": "scent_warden",
+          "x": 76,
+          "y": 44,
+          "resolveCost": 4,
+          "damage": 3,
+          "reward": { "hide": 2, "dungeonXp": 5 }
         },
         {
           "id": "boss",
           "name": "Brood Matron",
-          "type": "combat",
+          "type": "boss",
+          "uniqueBoss": true,
+          "x": 90,
+          "y": 44,
+          "resolveCost": 5,
           "enemy": { "hp": 34, "atk": 5, "script": ["bite", "shriek", "heavy"] },
-          "reward": { "hide": 5, "coin": 5, "fame": 2, "xp": 5, "blueprint": "ironBlade" }
+          "reward": { "hide": 5, "coin": 5, "fame": 2, "xp": 5, "dungeonXp": 10, "blueprint": "ironBlade" },
+          "effectsOnClear": [
+            { "type": "unlock_location", "locationId": "mine" }
+          ]
         }
       ]
     },
@@ -69,30 +225,264 @@
       "name": "Old Copper Mine",
       "titleImage": "assets/old-copper-mine-01.png",
       "coord": { "x": 740, "y": 340 },
-      "description": "A longer mine route with ore rewards and heavier enemies.",
+      "description": "A branching mine network with three old powers blocking the lower road.",
       "travelHours": 5,
       "foodCost": 3,
+      "startNodeIds": ["mine_mouth"],
+      "routes": [
+        { "id": "cart_vein", "name": "Cart Vein", "nodeIds": ["mine_mouth", "cart_split", "timber_drop", "ore_kobolds", "copper_lift", "foreman_gate", "boss_foreman"] },
+        { "id": "flooded_works", "name": "Flooded Works", "nodeIds": ["mine_mouth", "sump_bridge", "black_water", "fungal_pockets", "pump_lock", "drowned_gallery", "boss_sump"] },
+        { "id": "warded_gallery", "name": "Warded Gallery", "default": true, "nodeIds": ["mine_mouth", "rune_survey", "copper_sparks", "ward_kobolds", "old_shrine", "sealed_lift", "boss_ward"] }
+      ],
+      "edges": [
+        { "from": "mine_mouth", "to": "cart_split" },
+        { "from": "cart_split", "to": "timber_drop" },
+        { "from": "timber_drop", "to": "ore_kobolds" },
+        { "from": "ore_kobolds", "to": "copper_lift" },
+        { "from": "copper_lift", "to": "foreman_gate" },
+        { "from": "foreman_gate", "to": "boss_foreman" },
+        { "from": "mine_mouth", "to": "sump_bridge" },
+        { "from": "sump_bridge", "to": "black_water" },
+        { "from": "black_water", "to": "fungal_pockets" },
+        { "from": "fungal_pockets", "to": "pump_lock" },
+        { "from": "pump_lock", "to": "drowned_gallery" },
+        { "from": "drowned_gallery", "to": "boss_sump" },
+        { "from": "mine_mouth", "to": "rune_survey" },
+        { "from": "rune_survey", "to": "copper_sparks" },
+        { "from": "copper_sparks", "to": "ward_kobolds" },
+        { "from": "ward_kobolds", "to": "old_shrine" },
+        { "from": "old_shrine", "to": "sealed_lift" },
+        { "from": "sealed_lift", "to": "boss_ward" }
+      ],
+      "mastery": {
+        "xpPerPoint": 18,
+        "nodes": {
+          "survey_marks": {
+            "name": "Survey Marks",
+            "category": "route",
+            "maxRank": 1,
+            "requires": [],
+            "effects": [{ "type": "route_hint", "valuePerRank": 1 }],
+            "x": 0,
+            "y": 0
+          },
+          "ward_charm_lead": {
+            "name": "Ward Charm Lead",
+            "category": "blueprint",
+            "maxRank": 1,
+            "requires": ["survey_marks"],
+            "effects": [{ "type": "blueprint_hint", "blueprint": "wardCharm", "valuePerRank": 1 }],
+            "x": 1,
+            "y": 1
+          }
+        }
+      },
       "nodes": [
         {
-          "id": "road",
-          "name": "Broken Road",
+          "id": "mine_mouth",
+          "name": "Mine Mouth",
+          "type": "check",
+          "x": 8,
+          "y": 50,
+          "resolveCost": 4,
+          "utility": 4,
+          "reward": { "ore": 4, "dungeonXp": 8 }
+        },
+        {
+          "id": "cart_split",
+          "name": "Cart Split",
+          "type": "combat",
+          "x": 22,
+          "y": 20,
+          "resolveCost": 4,
+          "enemy": { "hp": 52, "atk": 6, "script": ["stab", "guard", "strike"] },
+          "reward": { "ore": 3, "coin": 3, "xp": 5, "dungeonXp": 7 }
+        },
+        {
+          "id": "timber_drop",
+          "name": "Timber Drop",
+          "type": "combat",
+          "x": 36,
+          "y": 16,
+          "resolveCost": 4,
+          "enemy": { "hp": 56, "atk": 7, "script": ["heavy", "strike", "guard"] },
+          "reward": { "wood": 3, "ore": 3, "xp": 5, "dungeonXp": 8 }
+        },
+        {
+          "id": "ore_kobolds",
+          "name": "Ore Kobolds",
+          "type": "combat",
+          "x": 50,
+          "y": 14,
+          "resolveCost": 4,
+          "enemy": { "hp": 58, "atk": 7, "script": ["stab", "heavy", "guard", "stab"] },
+          "reward": { "ore": 9, "coin": 6, "xp": 6, "dungeonXp": 10 }
+        },
+        {
+          "id": "copper_lift",
+          "name": "Copper Lift",
+          "type": "combat",
+          "x": 64,
+          "y": 18,
+          "resolveCost": 4,
+          "enemy": { "hp": 66, "atk": 7, "def": 1, "script": ["guard", "strike", "heavy"] },
+          "reward": { "ore": 6, "xp": 6, "dungeonXp": 8 }
+        },
+        {
+          "id": "foreman_gate",
+          "name": "Foreman Gate",
+          "type": "combat",
+          "x": 78,
+          "y": 20,
+          "resolveCost": 4,
+          "enemy": { "hp": 72, "atk": 8, "def": 1, "script": ["mark", "strike", "heavy"] },
+          "reward": { "ore": 4, "coin": 4, "xp": 7, "dungeonXp": 8 }
+        },
+        {
+          "id": "boss_foreman",
+          "name": "Copper Foreman",
+          "type": "boss",
+          "uniqueBoss": true,
+          "x": 92,
+          "y": 20,
+          "resolveCost": 5,
+          "enemy": { "hp": 86, "atk": 9, "def": 2, "script": ["mark", "strike", "heavy", "guard"] },
+          "reward": { "ore": 18, "coin": 12, "fame": 3, "xp": 14, "dungeonXp": 18 },
+          "effectsOnClear": [
+            { "type": "unlock_location_when_cleared", "locationId": "barracks", "requiredNodeIds": ["boss_foreman", "boss_sump", "boss_ward"] }
+          ]
+        },
+        {
+          "id": "sump_bridge",
+          "name": "Sump Bridge",
+          "type": "combat",
+          "x": 22,
+          "y": 50,
+          "resolveCost": 4,
+          "enemy": { "hp": 54, "atk": 6, "script": ["drag", "strike", "guard"] },
+          "reward": { "ore": 3, "hide": 2, "xp": 5, "dungeonXp": 7 }
+        },
+        {
+          "id": "black_water",
+          "name": "Black Water",
+          "type": "combat",
+          "x": 36,
+          "y": 50,
+          "resolveCost": 4,
+          "enemy": { "hp": 58, "atk": 7, "script": ["drag", "pulse", "strike"] },
+          "reward": { "hide": 3, "xp": 5, "dungeonXp": 8 }
+        },
+        {
+          "id": "fungal_pockets",
+          "name": "Fungal Pockets",
+          "type": "combat",
+          "x": 50,
+          "y": 50,
+          "resolveCost": 4,
+          "enemy": { "hp": 64, "atk": 7, "script": ["spore", "strike", "spore", "heavy"] },
+          "reward": { "hide": 5, "ore": 5, "xp": 7, "dungeonXp": 10 }
+        },
+        {
+          "id": "pump_lock",
+          "name": "Pump Lock",
+          "type": "combat",
+          "x": 64,
+          "y": 50,
+          "resolveCost": 4,
+          "enemy": { "hp": 70, "atk": 7, "def": 1, "script": ["guard", "pulse", "heavy"] },
+          "reward": { "ore": 5, "coin": 4, "xp": 6, "dungeonXp": 8 }
+        },
+        {
+          "id": "drowned_gallery",
+          "name": "Drowned Gallery",
           "type": "hazard",
-          "damage": 4,
-          "reward": { "ore": 2 }
+          "x": 78,
+          "y": 50,
+          "resolveCost": 4,
+          "damage": 7,
+          "reward": { "ore": 5, "dungeonXp": 8 }
         },
         {
-          "id": "kobolds",
-          "name": "Kobold Crew",
+          "id": "boss_sump",
+          "name": "Sump King",
+          "type": "boss",
+          "uniqueBoss": true,
+          "x": 92,
+          "y": 50,
+          "resolveCost": 5,
+          "enemy": { "hp": 92, "atk": 8, "def": 1, "script": ["drag", "strike", "heavy", "pulse"] },
+          "reward": { "hide": 8, "ore": 12, "fame": 3, "xp": 14, "dungeonXp": 18 },
+          "effectsOnClear": [
+            { "type": "unlock_location_when_cleared", "locationId": "barracks", "requiredNodeIds": ["boss_foreman", "boss_sump", "boss_ward"] }
+          ]
+        },
+        {
+          "id": "rune_survey",
+          "name": "Rune Survey",
           "type": "combat",
-          "enemy": { "hp": 42, "atk": 6, "script": ["stab", "heavy", "guard"] },
-          "reward": { "ore": 8, "coin": 6, "xp": 6 }
+          "x": 22,
+          "y": 80,
+          "resolveCost": 4,
+          "enemy": { "hp": 56, "atk": 6, "script": ["pulse", "strike", "guard"] },
+          "reward": { "ore": 4, "xp": 5, "dungeonXp": 7 }
         },
         {
-          "id": "ward",
+          "id": "copper_sparks",
+          "name": "Copper Sparks",
+          "type": "combat",
+          "x": 36,
+          "y": 84,
+          "resolveCost": 4,
+          "enemy": { "hp": 62, "atk": 7, "script": ["pulse", "pulse", "strike"] },
+          "reward": { "ore": 5, "xp": 6, "dungeonXp": 8 }
+        },
+        {
+          "id": "ward_kobolds",
+          "name": "Ward Kobolds",
+          "type": "combat",
+          "x": 50,
+          "y": 86,
+          "resolveCost": 4,
+          "enemy": { "hp": 68, "atk": 8, "script": ["stab", "pulse", "heavy", "guard"] },
+          "reward": { "ore": 9, "coin": 7, "xp": 7, "dungeonXp": 10 }
+        },
+        {
+          "id": "old_shrine",
+          "name": "Old Shrine",
+          "type": "relief",
+          "x": 64,
+          "y": 82,
+          "resolveCost": 4,
+          "damage": 0,
+          "reward": { "fame": 1, "dungeonXp": 8 },
+          "effectsOnClear": [
+            { "type": "node_resolve_cost_add", "targetNodeId": "sealed_lift", "value": -1, "minimum": -2 },
+            { "type": "node_resolve_cost_add", "targetNodeId": "boss_ward", "value": -1, "minimum": -2 }
+          ]
+        },
+        {
+          "id": "sealed_lift",
+          "name": "Sealed Lift",
+          "type": "combat",
+          "x": 78,
+          "y": 80,
+          "resolveCost": 4,
+          "enemy": { "hp": 76, "atk": 8, "def": 1, "script": ["guard", "pulse", "heavy"] },
+          "reward": { "ore": 6, "xp": 7, "dungeonXp": 8 }
+        },
+        {
+          "id": "boss_ward",
           "name": "Mine Ward",
-          "type": "combat",
-          "enemy": { "hp": 56, "atk": 7, "script": ["pulse", "pulse", "heavy"] },
-          "reward": { "ore": 12, "fame": 4, "xp": 10, "blueprint": "wardCharm" }
+          "type": "boss",
+          "uniqueBoss": true,
+          "x": 92,
+          "y": 80,
+          "resolveCost": 5,
+          "enemy": { "hp": 98, "atk": 9, "def": 2, "script": ["pulse", "pulse", "heavy", "guard"] },
+          "reward": { "ore": 16, "fame": 4, "xp": 16, "dungeonXp": 20, "blueprint": "wardCharm" },
+          "effectsOnClear": [
+            { "type": "unlock_location_when_cleared", "locationId": "barracks", "requiredNodeIds": ["boss_foreman", "boss_sump", "boss_ward"] }
+          ]
         }
       ]
     },
@@ -104,27 +494,58 @@
       "description": "A distant military ruin with utility checks and high combat pressure.",
       "travelHours": 7,
       "foodCost": 5,
+      "routes": [
+        { "id": "outer_wall", "name": "Outer Wall", "nodeIds": ["gate", "drills"] },
+        { "id": "captain_push", "name": "Captain Push", "default": true, "nodeIds": ["gate", "drills", "captain"] }
+      ],
+      "mastery": {
+        "xpPerPoint": 24,
+        "nodes": {
+          "drill_notes": {
+            "name": "Drill Notes",
+            "category": "route",
+            "maxRank": 1,
+            "requires": [],
+            "effects": [{ "type": "route_hint", "valuePerRank": 1 }],
+            "x": 0,
+            "y": 0
+          },
+          "bunkroom_ledger": {
+            "name": "Bunkroom Ledger",
+            "category": "blueprint",
+            "maxRank": 1,
+            "requires": ["drill_notes"],
+            "effects": [{ "type": "blueprint_hint", "blueprint": "bunkRoom", "valuePerRank": 1 }],
+            "x": 1,
+            "y": 1
+          }
+        }
+      },
       "nodes": [
         {
           "id": "gate",
           "name": "Gate Lock",
           "type": "check",
+          "resolveCost": 4,
           "utility": 4,
-          "reward": { "wood": 4, "ore": 2 }
+          "reward": { "wood": 4, "ore": 2, "dungeonXp": 5 }
         },
         {
           "id": "drills",
           "name": "Animated Drills",
           "type": "combat",
+          "resolveCost": 6,
           "enemy": { "hp": 64, "atk": 7, "script": ["strike", "heavy", "strike", "brace"] },
-          "reward": { "ore": 10, "coin": 10, "xp": 10 }
+          "reward": { "ore": 10, "coin": 10, "xp": 10, "dungeonXp": 10 }
         },
         {
           "id": "captain",
           "name": "Clockwork Captain",
-          "type": "combat",
+          "type": "boss",
+          "uniqueBoss": true,
+          "resolveCost": 8,
           "enemy": { "hp": 86, "atk": 9, "script": ["mark", "heavy", "strike"] },
-          "reward": { "fame": 6, "xp": 16, "blueprint": "bunkRoom" }
+          "reward": { "fame": 6, "xp": 16, "dungeonXp": 16, "blueprint": "bunkRoom" }
         }
       ]
     }

@@ -22,16 +22,26 @@ function createHarness() {
   const registered = {};
   const mapTab = fakeElement({ tab: "map" });
   const operationsTab = fakeElement({ mapSideTab: "operations" });
+  const dungeonInfoTab = fakeElement({ dungeonLocalTab: "info" });
+  const populationWorkshopTab = fakeElement({ populationLocalTab: "workshop" });
+  const rosterSkillTab = fakeElement({ rosterDetailTab: "skill1" });
+  const tavernSkillTab = fakeElement({ tavernDetailTab: "skill1" });
   const replayTimelineSlider = fakeElement();
   const dungeonSelect = fakeElement();
+  const mapPartySelect = fakeElement();
   const partySelect = fakeElement();
+  const strategySelect = fakeElement();
 
   setupAppControls({
     documentRef: {
       querySelectorAll(selector) {
         return {
           "[data-tab]": [mapTab],
-          "[data-map-side-tab]": [operationsTab]
+          "[data-map-side-tab]": [operationsTab],
+          "[data-dungeon-local-tab]": [dungeonInfoTab],
+          "[data-population-local-tab]": [populationWorkshopTab],
+          "[data-roster-detail-tab]": [rosterSkillTab],
+          "[data-tavern-detail-tab]": [tavernSkillTab]
         }[selector] || [];
       }
     },
@@ -40,8 +50,10 @@ function createHarness() {
     },
     el: {
       dungeonSelect,
+      mapPartySelect,
       partySelect,
-      replayTimelineSlider
+      replayTimelineSlider,
+      strategySelect
     },
     state: {
       dungeonReplay: {
@@ -52,13 +64,19 @@ function createHarness() {
     appShellCommandHandlers: {
       clearLog: () => calls.push("clearLog"),
       onDungeonSelectChange: () => calls.push("dungeonChange"),
+      onMapPartySelectChange: () => calls.push("mapPartyChange"),
       onPartySelectChange: () => calls.push("partyChange"),
+      setDungeonLocalTab: (tabId) => calls.push(["dungeonLocal", tabId]),
       setMapSideTab: (tabId) => calls.push(["mapSide", tabId]),
+      setPopulationLocalTab: (tabId) => calls.push(["populationLocal", tabId]),
+      setRosterDetailTab: (tabId) => calls.push(["rosterDetail", tabId]),
+      setTavernDetailTab: (tabId) => calls.push(["tavernDetail", tabId]),
       setTab: (tabId) => calls.push(["tab", tabId])
     },
     dungeonCommandHandlers: {
       automateLastEstimate: () => calls.push("autoEstimate"),
       commitLastEstimate: () => calls.push("commitEstimate"),
+      resimulateSelectedRun: () => calls.push("resimulate"),
       simulateSelectedRun: () => calls.push("simulate")
     },
     partyCommandHandlers: {
@@ -70,7 +88,7 @@ function createHarness() {
       toggleReplayPlayback: () => calls.push("replayToggle")
     },
     rosterTavernCommandHandlers: {
-      assignWorker: (job) => calls.push(["assign", job]),
+      buildHouses: () => calls.push("buildHouses"),
       craft: (id) => calls.push(["craft", id]),
       toggleRosterView: () => calls.push("toggleRoster"),
       upgradeTavern: () => calls.push("upgrade")
@@ -85,28 +103,32 @@ function createHarness() {
   return {
     calls,
     dungeonSelect,
+    dungeonInfoTab,
+    populationWorkshopTab,
+    rosterSkillTab,
+    tavernSkillTab,
+    mapPartySelect,
     mapTab,
     operationsTab,
     partySelect,
     registered,
-    replayTimelineSlider
+    replayTimelineSlider,
+    strategySelect
   };
 }
 
 test("setupAppControls delegates bound controls to command owners", () => {
   const { calls, registered } = createHarness();
 
-  registered["advanceHourBtn:click"]();
-  registered["assignWoodBtn:click"]();
-  registered["craftBladeBtn:click"]();
+  registered["advanceDayBtn:click"]();
+  registered["buildHousesBtn:click"]();
   registered["simulateBtn:click"]();
   registered["replayPrevBtn:click"]();
   registered["clearLogBtn:click"]();
 
-  assert.deepEqual(calls.slice(-6), [
-    ["time", 1, true],
-    ["assign", "wood"],
-    ["craft", "ironBlade"],
+  assert.deepEqual(calls.slice(-5), [
+    ["time", 24, true],
+    "buildHouses",
     "simulate",
     ["cursor", 3, undefined],
     "clearLog"
@@ -114,21 +136,33 @@ test("setupAppControls delegates bound controls to command owners", () => {
 });
 
 test("setupAppControls delegates tabs, selects, slider, and startup map setup", () => {
-  const { calls, dungeonSelect, mapTab, operationsTab, partySelect, replayTimelineSlider } = createHarness();
+  const { calls, dungeonInfoTab, dungeonSelect, mapPartySelect, mapTab, operationsTab, partySelect, populationWorkshopTab, replayTimelineSlider, rosterSkillTab, strategySelect, tavernSkillTab } = createHarness();
 
   mapTab.trigger("click");
   operationsTab.trigger("click");
+  dungeonInfoTab.trigger("click");
+  populationWorkshopTab.trigger("click");
+  rosterSkillTab.trigger("click");
+  tavernSkillTab.trigger("click");
   replayTimelineSlider.value = "5";
   replayTimelineSlider.trigger("input");
+  mapPartySelect.trigger("change");
   dungeonSelect.trigger("change");
   partySelect.trigger("change");
+  strategySelect.trigger("change");
 
   assert.deepEqual(calls, [
     "setupMap",
     ["tab", "map"],
     ["mapSide", "operations"],
+    ["dungeonLocal", "info"],
+    ["populationLocal", "workshop"],
+    ["rosterDetail", "skill1"],
+    ["tavernDetail", "skill1"],
     ["cursor", 5, true],
+    "mapPartyChange",
     "dungeonChange",
-    "partyChange"
+    "partyChange",
+    "resimulate"
   ]);
 });

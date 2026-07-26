@@ -96,8 +96,8 @@ test("zoomMapAt preserves cursor world point and clamps zoom", () => {
 test("mapTransformStyle and mapStatusText format map UI state", () => {
   assert.equal(mapTransformStyle(mapView()), "translate(24px, 12px) scale(2)");
   assert.equal(
-    mapStatusText({ operationCount: 1, zoom: 0.65, worldSize: 1024 }),
-    "1 party op / zoom 0.65x / world 1024x1024"
+    mapStatusText({ operationCount: 1, zoom: 0.65, worldWidth: 2048, worldHeight: 1024 }),
+    "1 party op / zoom 0.65x / world 2048x1024"
   );
   assert.equal(
     mapStatusText({ operationCount: 2, zoom: 1, worldSize: 1024 }),

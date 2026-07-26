@@ -12,6 +12,7 @@ import { createInitialState } from "../src/app/appState.js";
 test("createSavePayload writes schema version and serializable state", () => {
   const state = createInitialState();
   state.resources.coin = 42;
+  state.events.seen["tutorial.tavern_charter"] = true;
   state.dungeonReplay.timer = { nonSerializable: true };
   state.mapView.dragging = true;
   state.mapView.dragStartX = 12;
@@ -20,6 +21,7 @@ test("createSavePayload writes schema version and serializable state", () => {
 
   assert.equal(payload.version, SAVEGAME_SCHEMA_VERSION);
   assert.equal(payload.state.resources.coin, 42);
+  assert.equal(payload.state.events.seen["tutorial.tavern_charter"], true);
   assert.equal(payload.state.dungeonReplay, undefined);
   assert.equal(payload.state.mapView.dragging, false);
   assert.equal(payload.state.mapView.dragStartX, 0);
