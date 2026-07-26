@@ -235,6 +235,99 @@ test("simulateDungeonRun applies conquest modifiers and explicit planned paths",
   assert.match(estimate.transcript.join("\n"), /active modifiers guard_frenzy/);
 });
 
+test("simulateDungeonRun keeps unique bosses farmable after first conquest clear", () => {
+  const bossDungeon = {
+    id: "boss-cave",
+    name: "Boss Cave",
+    travelHours: 1,
+    foodCost: 0,
+    nodes: [
+      {
+        id: "boss",
+        type: "boss",
+        name: "Matron",
+        uniqueBoss: true,
+        resolveCost: 1,
+        enemy: { hp: 1, atk: 0, script: ["bite"] },
+        reward: { fame: 2, coin: 5 }
+      }
+    ]
+  };
+
+  const estimate = simulateDungeonRun({
+    dungeon: bossDungeon,
+    strategy: "balanced",
+    stopNode: "all",
+    party,
+    stats: { ...stats, resolve: 12 },
+    members,
+    availableFood: 10,
+    defeatedBosses: { "boss-cave:boss": true },
+    conquestState: {
+      clearedNodes: { boss: true },
+      unlockedNodes: {},
+      disabledModifiers: {},
+      nodeCostAdjustments: {}
+    }
+  });
+
+  assert.equal(estimate.success, true);
+  assert.deepEqual(estimate.rewards, { fame: 2, coin: 5 });
+  assert.doesNotMatch(estimate.transcript.join("\n"), /already cleared/);
+});
+
+test("simulateDungeonRun skips cleared one-time nodes unless repeat rewards are enabled", () => {
+  const oneTimeDungeon = {
+    id: "warden-cave",
+    name: "Warden Cave",
+    travelHours: 1,
+    foodCost: 0,
+    nodes: [
+      {
+        id: "warden",
+        type: "miniboss",
+        name: "Warden",
+        oneTime: true,
+        uniqueBoss: true,
+        resolveCost: 1,
+        enemy: { hp: 1, atk: 0, script: ["bite"] },
+        reward: { coin: 3 }
+      },
+      {
+        id: "toll",
+        type: "miniboss",
+        name: "Toll Warden",
+        oneTime: true,
+        uniqueBoss: true,
+        repeatRewards: true,
+        resolveCost: 1,
+        enemy: { hp: 1, atk: 0, script: ["bite"] },
+        reward: { hide: 2 }
+      }
+    ]
+  };
+
+  const estimate = simulateDungeonRun({
+    dungeon: oneTimeDungeon,
+    strategy: "balanced",
+    stopNode: "all",
+    party,
+    stats: { ...stats, resolve: 12 },
+    members,
+    availableFood: 10,
+    conquestState: {
+      clearedNodes: { warden: true, toll: true },
+      unlockedNodes: {},
+      disabledModifiers: {},
+      nodeCostAdjustments: {}
+    }
+  });
+
+  assert.equal(estimate.success, true);
+  assert.deepEqual(estimate.rewards, { hide: 2 });
+  assert.match(estimate.transcript.join("\n"), /unique threat already cleared/);
+});
+
 test("adjusted travel and food costs clamp to deterministic minimums", () => {
   assert.equal(adjustedTravelHours(5, { travelSpeed: 4 }), 3);
   assert.equal(adjustedTravelHours(1, { travelSpeed: 99 }), 1);

@@ -102,7 +102,7 @@
 - `src/game/combat/combatTimeline.js` owns combat actor creation, node resolution, deterministic combat scheduling, party HP summary, and recovery-hour calculation.
 - `src/game/combat/combatActions.js` owns party action selection, enemy target selection, enemy damage, and action recovery helpers.
 - `src/game/combat/combatReplayModel.js` owns replay event and actor snapshot creation.
-- `src/game/dungeon/dungeonRunSimulator.js` owns deterministic dungeon estimate simulation, travel/food adjustment, reward merging, and replay start/block/end events.
+- `src/game/dungeon/dungeonRunSimulator.js` owns deterministic dungeon estimate simulation, travel/food adjustment, reward merging, and replay start/block/end events. Cleared `uniqueBoss` nodes remain farmable on repeat runs; only nodes marked `oneTime` are skipped as already-cleared unless they opt into `repeatRewards`.
 - `src/game/dungeon/dungeonRunSimulator.js` now resolves named route graphs, applies per-node Resolve costs, withdraws heroes who run out of Resolve, and preserves partial rewards.
 - `src/game/dungeon/dungeonGraphModel.js` owns route normalization, explicit planned paths, graph link/layout projection, click-to-plan/truncate behavior, node lookup, active modifiers, effective Resolve cost reads, and unique boss detection.
 - `src/game/dungeon/dungeonConquest.js` owns scheduled-completion conquest effects: cleared nodes, disabled modifiers, unlocked nodes, unlocked locations/features, and persistent Resolve cost adjustments.
@@ -332,6 +332,7 @@
 - Map-side dungeon `run` creates/replaces the party's repeated full-route plan, queues the first run when possible, simulates immediately, and routes to the Dungeon tab.
 - Dungeon graph planning uses `path:<nodeId>,<nodeId>` stop values, simulates the legal deterministic path, and updates repeated intent for future queue attempts when repeated mode is active. Legacy `node:<nodeId>` target values remain available from the Info select.
 - Dungeon completion applies conquest effects from reached nodes only after scheduled operations return; simulation previews never mutate conquest state.
+- Boss rewards such as Rat Cellar fame remain repeatable after first clear, while progression effects such as unlocking Old Copper Mine stay first-clear/idempotent through conquest completion.
 - Dungeon strategy changes resimulate immediately and replace the selected party's repeated estimate for future queue attempts without mutating active operations.
 - Successful completed dungeon operations increment clear counters and can reveal later locations.
 - `dungeonXp` feeds dungeon mastery and is ignored by generic resource reward application.

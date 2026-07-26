@@ -87,7 +87,7 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
 - Combat replay event snapshots live in `src/game/combat/combatReplayModel.js`.
 - Dungeon run simulation lives in `src/game/dungeon/dungeonRunSimulator.js`.
 - Dungeon route graph helpers live in `src/game/dungeon/dungeonGraphModel.js`; named routes, default routes, explicit planned paths, click-to-plan/truncate behavior, graph link/layout projection, node lookup, effective Resolve costs, active modifiers, and unique boss detection are normalized there.
-- Dungeon conquest completion effects live in `src/game/dungeon/dungeonConquest.js`; scheduled operation completion applies persistent node clears, modifier disables, node unlocks, location unlocks, feature flags, and node Resolve cost adjustments there.
+- Dungeon conquest completion effects live in `src/game/dungeon/dungeonConquest.js`; scheduled operation completion applies persistent node clears, modifier disables, node unlocks, location unlocks, feature flags, and node Resolve cost adjustments there. Boss rewards remain farmable unless a node is explicitly marked `oneTime`; first-clear progression belongs to conquest effects such as location unlocks.
 - Dungeon mastery progression lives in `src/game/dungeon/dungeonMastery.js`; it reuses generic progression graph rules for dungeon-specific XP/points and deterministic first-slice auto-unlocks.
 - Dungeon operation value/scheduling helpers live in `src/game/dungeon/dungeonOperationModel.js`.
 - Dungeon operation completion mutation lives in `src/game/dungeon/dungeonCompletion.js`.
@@ -308,7 +308,7 @@ The design intentionally rejects random drops, random stat rolls, and RNG combat
 - Arrival prompts are focus choices only: switching or staying does not reroll or alter the deterministic arrival outcome.
 - `focusContinent()` sets the focused continent and records a deterministic time-away catch-up report. Current catch-up is a placeholder report because economy/resource ownership is still global.
 - Dungeon graph planning uses stop values shaped as `path:<nodeId>,<nodeId>`, resolves a legal deterministic path through `dungeonRouteForStop()`, and follows the same repeated-plan update semantics as strategy changes. Legacy `node:<nodeId>` target values still work from the Info select.
-- Dungeon completion applies conquest effects from reached nodes, even when a later planned node fails. Preview simulation reads conquest state but never mutates it.
+- Dungeon completion applies conquest effects from reached nodes, even when a later planned node fails. Preview simulation reads conquest state but never mutates it. Cleared `uniqueBoss` nodes still resolve and award their normal rewards on later runs; only `oneTime` nodes are traversed as already-cleared.
 - Completed successful dungeon operations increment dungeon clear counters. Rat Cellar clear 50 reveals Old Copper Mine as a fallback. Old Barracks is revealed by clearing all three Old Copper Mine branch bosses.
 - `dungeonXp` is progression-only and feeds dungeon mastery; it is ignored by generic resource reward application.
 - Dungeon strategy changes call resimulation immediately; if the selected party has a repeated plan, the stored repeated estimate is replaced for future queue attempts while active operations remain unchanged.

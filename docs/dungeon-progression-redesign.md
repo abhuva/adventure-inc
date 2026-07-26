@@ -141,9 +141,9 @@ Current supported node behavior:
 - `resource`: deterministic objective node for repeatable dungeon resources
 - `modifier`: deterministic objective node for graph state changes
 - `miniboss`: deterministic combat node, usually one-time, often disables a modifier or unlocks access
-- `boss`: deterministic combat timeline with one-time boss semantics when `uniqueBoss` is true
+- `boss`: deterministic combat timeline; first-clear effects can unlock progression while normal rewards remain farmable unless the node is also marked `oneTime`
 
-Boss nodes are treated as combat by the resolver. A unique boss marks `state.progression.uniqueBosses[dungeonId:nodeId]` after a successful route containing that node. Later simulations can traverse that node as already cleared and do not award its one-time reward again.
+Boss nodes are treated as combat by the resolver. A unique boss marks `state.progression.uniqueBosses[dungeonId:nodeId]` after a successful route containing that node, but `uniqueBoss` by itself does not suppress future combat or rewards. Use `oneTime: true` for conquest obstacles that should be skipped after clearing. First-clear progression is owned by completion-side `effectsOnClear`, so a boss can keep paying fame/XP/resources on repeat runs while its map unlock only happens once.
 
 One-time nodes are marked as cleared when they are reached by a completed operation, even if a later node in the same planned path fails. This lets partial routes still make conquest progress.
 
@@ -166,7 +166,7 @@ Old Copper Mine is the second authored conquest dungeon:
 - Branch bosses are `boss_foreman`, `boss_sump`, and `boss_ward`.
 - The sum of all Mine node Resolve costs is `79`, roughly one fifth of the original 392-point draft.
 - The tree intentionally contains only one utility check (`mine_mouth`) and one hazard (`drowned_gallery`); the remaining route pressure is combat, plus the ward branch relief node.
-- Each boss has a first-clear reward package. Because the bosses are `uniqueBoss` nodes, later traversal skips the one-time reward unless a node explicitly opts into repeat rewards.
+- Each boss has a farmable reward package. Because the bosses are `uniqueBoss` nodes, first-clear conquest state still records which bosses were cleared for the Old Barracks reveal, but repeated traversal continues to resolve the boss and pay its rewards.
 - Each boss carries the same `unlock_location_when_cleared` effect. Old Barracks is revealed only after all three Mine bosses are cleared.
 
 ## Dungeon Mastery

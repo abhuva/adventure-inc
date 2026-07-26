@@ -158,7 +158,8 @@ export function mergeRewards(target, rewards = {}) {
 }
 
 function isClearedOneTimeNode(dungeonId, node, defeatedBosses, conquestState) {
-  if (conquestState.clearedNodes?.[node.id] && (node.oneTime || isUniqueBossNode(node))) return true;
+  if (!node.oneTime) return false;
+  if (conquestState.clearedNodes?.[node.id]) return true;
   return isUniqueBossNode(node) && defeatedBosses[uniqueBossKey(dungeonId, node.id)];
 }
 

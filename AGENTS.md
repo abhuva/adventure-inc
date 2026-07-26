@@ -42,7 +42,7 @@ Core prototype pillars:
 - Prefer small, testable increments over rewrites.
 - Update `AI_CONTEXT.md` when changing architecture, data ownership, UI contracts, save/load behavior, automation, combat resolution, or major gameplay systems.
 - Update `NEXT_SESSION_HANDOFF.md` at the end of substantial work.
-- If the repo becomes a git repository later, do not commit, push, or create PRs unless explicitly asked.
+- Do not commit, push, or create PRs unless the user explicitly asks for that action. Never do these on your own initiative.
 
 ## UI Direction
 
